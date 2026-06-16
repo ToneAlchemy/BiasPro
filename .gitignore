@@ -1,0 +1,9 @@
+.vscode/
+build/
+*.hex
+*.elf
+*.eep
+*.map
+*.o
+*.d
+*.exe
