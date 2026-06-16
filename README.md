@@ -1,6 +1,6 @@
-# 🎛️ Arduino Tube Amp BiasPro (Clean-Room Edition)
+# 🎛️ Arduino Tube Amp BiasPro
 
-This repository contains the complete, mathematically hardened, clean-room firmware for a professional-grade, dual-probe vacuum tube bias meter. Designed for guitar amplifier technicians, this tool provides real-time, high-resolution measurements of Plate Voltage, Cathode Current, and True Plate Dissipation (Watts & %) for power tubes (e.g., 6L6GC, EL34, 6V6, KT88).
+This repository contains the complete, mathematically hardened firmware for a professional-grade, dual-probe vacuum tube bias meter. Designed for guitar amplifier technicians, this tool provides real-time, high-resolution measurements of Plate Voltage, Cathode Current, and True Plate Dissipation (Watts & %) for power tubes (e.g., 6L6GC, EL34, 6V6, KT88).
 
 This firmware was completely re-architected from scratch using modern, memory-safe embedded C++ principles to eliminate dynamic memory leaks and ensure rock-solid physical safety lockouts.
 
@@ -135,7 +135,5 @@ To calculate True Plate Dissipation, the BiasPro subtracts the Screen Grid Curre
 
 ---
 
-## ⚖️ Clean-Room Provenance & License
-This repository is a Clean-Room rewrite. It implements a strict, behaviour-only specification based on the physical requirements of a high-voltage bias meter. It does not contain any legacy source code, structural organisation, or mechanical translation from previous GPL/CC-licensed Arduino sketches.
-
+## ⚖️ License
 This project is released under the **MIT License**. See `LICENSE` for details.
