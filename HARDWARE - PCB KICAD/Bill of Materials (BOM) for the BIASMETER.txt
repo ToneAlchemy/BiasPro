@@ -1,0 +1,65 @@
+Bill of Materials (BOM) for the Arduino Tube Bias Meter
+Project by Tone Alchemy - https://tonealchemy.com/biasmeter
+
+=========================================================================
+CORE ELECTRONICS
+=========================================================================
+
+[ ] 1x Arduino Nano (or compatible clone)
+    - Link: https://amzn.to/4n7FcF8
+ 
+[ ] 1x Adafruit ADS1115 16-Bit ADC
+    - Link: https://amzn.to/46h8RpA
+
+[ ] 2x Tube Depot Bias Scout Probes (or equivalent custom-built probes)
+    - Link: https://www.tubedepot.com/products/tubedepot-bias-scout-kit
+    - Link Build manual: https://s3.amazonaws.com/tubedepot-com-production/spree/attached_files/td_bias_scout_assy_manual_v3.2.pdf?1477059879
+
+=========================================================================
+DISPLAY & INTERFACE
+=========================================================================
+
+[ ] 1x Adafruit ST7735 1.8" 128x160 Color TFT Display
+    - Link: https://amzn.to/48sSZ4B
+
+[ ] 3x Tactile Push Buttons (Normally Open, Panel Mount)
+    - Link: https://amzn.to/3VZbeqO
+    - Link: https://www.jaycar.com.au/metal-momentary-spst/p/SP0755
+
+[ ] 1x Project Enclosure (e.g., Hammond 1590B or custom 3D printed case)
+    - Link: https://www.tinkercad.com/things/52JVqAQGvP4/edit?sharecode=UnfbS9eHmJYUkZFwd_rKABnmDuH4jj8mL856R97Rt9c
+
+=========================================================================
+WIRING & CONNECTORS
+=========================================================================
+
+[ ] 1x USB to Type-C Data Cable with On/Off Switch (for programming and powering the Arduino)
+    - Link:  https://s.click.aliexpress.com/e/_c4D2sYFh
+
+[ ] Assorted Hook-up Wire (22 AWG solid core recommended)
+    - Link: https://amzn.to/46MNg8q
+
+[ ] 1x Stripboard or Perfboard (for mounting components)
+    - Link: https://amzn.to/46eUWAf
+
+=========================================================================
+PROBE CONSTRUCTION (if building custom probes)
+=========================================================================
+
+[ ] 2x Octal Sockets (for tube connection)
+    - Link:  https://s.click.aliexpress.com/e/_c40bYCer
+
+[ ] 2x Octal Bases (to build the probe housing)
+    - Link: https://s.click.aliexpress.com/e/_c3A4w85D
+
+[ ] 2x 1MΩ (1,000,000 Ohm), 1% tolerance, 1/2W Metal Film Resistor
+    - Link: https://s.click.aliexpress.com/e/_c4Bw7hpH
+
+[ ] 2x 100Ω (100 Ohm), 1% tolerance, 1/8W Metal Film Resistor
+    - Link: https://s.click.aliexpress.com/e/_c3nlLMiL
+
+[ ] 2x 1Ω (1 Ohm), 1% tolerance, 1W Metal Oxide Resistor
+    - Link: https://s.click.aliexpress.com/e/_c2zH3rlV
+
+[ ] 6x 4mm Banana Plugs (2x Red, 2x Black, 2x White)
+    - Link: https://s.click.aliexpress.com/e/_c3jXrt47

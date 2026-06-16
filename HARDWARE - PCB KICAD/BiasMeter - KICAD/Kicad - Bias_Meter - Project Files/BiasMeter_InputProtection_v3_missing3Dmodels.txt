@@ -1,0 +1,13 @@
+### Missing 3D models - created on 2025-08-24 14:54
+### Printed by checking_3D_models plugin
+Board file: F:\PCB DESIGN - KICAD\KICAD PROJECTS\KICAD 9 PROJECTS\BIAS METER PROJECTS\BIAS_METER-INPUT-PROTECTON-v3\BiasMeter_InputProtection_v3.kicad_pcb
+3D missing models written to:
+F:\PCB DESIGN - KICAD\KICAD PROJECTS\KICAD 9 PROJECTS\BIAS METER PROJECTS\BIAS_METER-INPUT-PROTECTON-v3\BiasMeter_InputProtection_v3_missing3Dmodels.txt
+-------
+('DZA0', '${KICAD6_3DMODEL_DIR}/Diode_THT.3dshapes/D_DO-41_SOD81_P10.16mm_Horizontal.wrl')
+('DZA3', '${KICAD6_3DMODEL_DIR}/Diode_THT.3dshapes/D_DO-41_SOD81_P10.16mm_Horizontal.wrl')
+('DZA1', '${KICAD6_3DMODEL_DIR}/Diode_THT.3dshapes/D_DO-41_SOD81_P10.16mm_Horizontal.wrl')
+('DZA2', '${KICAD6_3DMODEL_DIR}/Diode_THT.3dshapes/D_DO-41_SOD81_P10.16mm_Horizontal.wrl')
+-------
+NUM of 3D missing models:4
+checked extensions ['.stp', '.step', '.stpZ']
