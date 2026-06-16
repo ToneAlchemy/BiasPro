@@ -101,11 +101,14 @@ The firmware compiles to approximately **30,702 bytes**. It will successfully fl
 * **Using a Standard Nano or USB-C Clone:** The firmware will successfully flash to a standard Arduino Nano using the `Processor: ATmega328P (Old Bootloader)` setting in the Arduino IDE. The old bootloader leaves exactly 30,720 bytes of usable flash space, meaning this firmware fits with roughly **18 bytes to spare**. It works perfectly, but you cannot add any additional features or text without overflowing the memory.
 * **If your upload fails (or you wish to add features):** You will need to upgrade your Nano to the modern *Optiboot* bootloader. To do this, burn the Optiboot bootloader to your Nano using an ISP programmer, and change your board selection in the Arduino IDE from "Arduino Nano" to **"Arduino Uno"**. Optiboot only consumes 0.5KB, which will instantly free up an additional 1.5KB of flash space.
 
-### 3. Optional: Compile-Time Watchdog Timer (WDT)
-If you require Watchdog Timer functionality, you can define `BIASPRO_ENABLE_WDT` in the code.
-* **What is it?** The Watchdog Timer (WDT) is a hardware safety feature inside the Arduino's processor that acts like a "Dead Man's Switch." The main code must constantly reset the timer to prevent a reboot.
+### 3. Compile-Time Watchdog Timer (WDT)
+The Watchdog Timer (WDT) functionality is **enabled by default** in this firmware configuration.
+* **How to Turn It On/Off:** You can enable or disable the watchdog by editing [Config.h](./BiasPro/Config.h).
+  - **To Enable (On by default):** Ensure `#define BIASPRO_ENABLE_WDT` is defined at the top of [Config.h](./BiasPro/Config.h).
+  - **To Disable:** Comment out or delete that line in [Config.h](./BiasPro/Config.h) (e.g., `//#define BIASPRO_ENABLE_WDT`).
+* **What is it?** The Watchdog Timer (WDT) is a hardware safety feature inside the Arduino's processor that acts like a "Dead Man's Switch." The main code must constantly reset the timer to prevent an automatic system reboot.
 * **Why is it important for Tube Amps?** Tube amplifiers are electrically noisy environments. High voltage spikes, flyback EMF, or loose tube socket connections can create strong Electromagnetic Interference (EMI) that can freeze the I2C bus or display. If WDT is enabled and the system freezes for more than 4 seconds, the Watchdog detects the lockup and automatically reboots the device, restoring live readings immediately.
-* **Note on Boot Loop Issue:** Some cheaper Arduino Nano clones have incompatible bootloaders that crash when the Watchdog Timer is used. If enabling WDT causes your device to loop endlessly on boot, disable it or upgrade the bootloader to Optiboot.
+* **Note on Boot Loop Issue:** Some cheaper Arduino Nano clones have incompatible bootloaders that crash when the Watchdog Timer is used. If enabling WDT causes your device to loop endlessly on boot, disable it by commenting it out in [Config.h](./BiasPro/Config.h) or upgrade the bootloader to Optiboot.
 
 ---
 
