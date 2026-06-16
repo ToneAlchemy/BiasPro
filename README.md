@@ -15,6 +15,40 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 
 ---
 
+> [!CAUTION]
+> ## ⚠️ WARNING: HIGH VOLTAGE SAFETY
+>
+> **Tube amplifiers contain lethal high voltage (often 400V–500V+), even when powered off and unplugged.**
+>
+> This project involves building and using test equipment that interfaces directly with these dangerous circuits.
+> * **Risk of Death:** Incorrect wiring of the bias probes or misuse of this device can expose you to lethal current.
+> * **Filter Capacitors:** High voltage can remain stored in the amplifier's capacitors long after the power is cut. You must know how to safely drain filter capacitors before opening any chassis.
+> * **Qualified Personnel Only:** If you are not trained in high-voltage safety or are uncomfortable working with live circuits, **do not build or use this device**. Take your amplifier to a qualified technician instead.
+>
+> **DISCLAIMER & NO SUPPORT:** This project is provided "as is" with **no warranty and no technical support**. The author cannot provide assistance with assembly, troubleshooting, or code modifications. The author assumes no liability for injury, death, or equipment damage resulting from the use or construction of this device. **Use entirely at your own risk.**
+
+> [!IMPORTANT]
+> ### ⚡ Critical Safety: Capacitor Discharge
+> Before touching any internal component or connecting probes to a chassis, you must verify the filter capacitors are drained.
+>
+> * **The Golden Rule:** Always measure with a multimeter to confirm 0VDC before touching anything.
+> * **Discharge Tool:** Do not rely on the amp to drain itself. Use a dedicated **Capacitor Discharge Tool** to safely bleed off voltage.
+>      * *DIY Tip:* You can build one using a high-wattage resistor (e.g., **2kΩ to 5kΩ, 5 Watts**) wired to a probe and an alligator clip for ground. This slows the discharge **and** prevents sparking, unlike a screwdriver short.
+> * **One-Hand Rule:** When working on live amps, keep one hand in your pocket to prevent current from passing across your chest/heart.
+
+> [!NOTE]
+> ### 🛡️ Recommended Safety Gear
+> If you are working inside a live amplifier chassis, we strongly recommend using the following safety equipment:
+> 
+> * **Isolation Transformer:** This isolates the amplifier from the mains earth ground, significantly reducing the risk of lethal shock if you accidentally touch a live component while grounded.
+> * **Dim Bulb Limiter (Current Limiter):** Essential when powering up an amplifier for the first time after a repair. It prevents catastrophic damage (blown transformers) if there is a short circuit.
+>      * **⚠️ CRITICAL WARNING:** Do **NOT** attempt to set the final bias while running through a Dim Bulb Limiter. The limiter drops the wall voltage, which lowers the plate voltage and gives false low bias readings. Always bypass the limiter for the final precision bias adjustment.
+> * **Variac (Variable Transformer):** Highly recommended for two purposes:
+>      1.  **Voltage Stabilization:** Wall voltage fluctuates. A Variac allows you to set the input voltage exactly to your country's standard (e.g., 240V in Australia, 120V in USA, 230V in UK). This ensures your bias readings are accurate and consistent, rather than drifting with high/low wall voltage.
+>      2.  **Soft Start / Reforming:** Useful for slowly bringing up the voltage on vintage amplifiers to reform old capacitors safely.
+
+---
+
 ## ⚙️ Hardware Specifications
 
 * **MCU:** Arduino Nano / ATmega328P
