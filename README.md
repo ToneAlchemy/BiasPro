@@ -94,10 +94,15 @@ To guarantee a successful compile, you **must** use these exact library versions
 * `Adafruit ST7735 and ST7789 Library` v1.11.0
 * `Adafruit BusIO` v1.17.4
 
-### 2. CRITICAL: 99% Flash Memory Limit & The "Old Bootloader"
-The firmware compiles to approximately **30,702 bytes**. It will successfully flash to a standard Arduino Nano (Old Bootloader) with very few bytes to spare. 
+### 2. CRITICAL: 97% Flash Memory Limit & The "Old Bootloader"
+The firmware compiles to approximately **29,824 bytes** (97% of program storage). It will successfully flash to a standard Arduino Nano (Old Bootloader) with very few bytes to spare. 
 
-* **Using a Standard Nano or USB-C Clone:** The firmware will successfully flash to a standard Arduino Nano using the `Processor: ATmega328P (Old Bootloader)` setting in the Arduino IDE. The old bootloader leaves exactly 30,720 bytes of usable flash space, meaning this firmware fits with roughly **18 bytes to spare**. It works perfectly, but you cannot add any additional features or text without overflowing the memory.
+```text
+Sketch uses 29824 bytes (97%) of program storage space. Maximum is 30720 bytes.
+Global variables use 740 bytes (36%) of dynamic memory, leaving 1308 bytes for local variables. Maximum is 2048 bytes.
+```
+
+* **Using a Standard Nano or USB-C Clone:** The firmware will successfully flash to a standard Arduino Nano using the `Processor: ATmega328P (Old Bootloader)` setting in the Arduino IDE. The old bootloader leaves exactly 30,720 bytes of usable flash space, meaning this firmware fits with roughly **896 bytes to spare**. It works perfectly, but you have very little room to add additional features or text without overflowing the memory.
 * **If your upload fails (or you wish to add features):** You will need to upgrade your Nano to the modern *Optiboot* bootloader. To do this, burn the Optiboot bootloader to your Nano using an ISP programmer, and change your board selection in the Arduino IDE from "Arduino Nano" to **"Arduino Uno"**. Optiboot only consumes 0.5KB, which will instantly free up an additional 1.5KB of flash space.
 
 ### 3. EMI & I2C Freeze Protection

@@ -215,7 +215,7 @@ void ApplicationController::tick() {
   }
 
   if (activeScreen_ == ScreenId::SensorTelemetry) {
-    if (event == ButtonEvent::Center) {
+    if (event == ButtonEvent::Center || event == ButtonEvent::LongCenter) {
       if (protection_.isLocked()) {
         activeScreen_ = ScreenId::FaultLockout;
       } else {

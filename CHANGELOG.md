@@ -9,3 +9,4 @@
 - [Fixed] Shifted the yellow `30W 55/1000` text leftward on the Tube Selection screen to prevent the trailing zero from wrapping to the next line.
 - [Fixed] Removed the yellow `DIAGNOSTIC` sub-text from the RAW SENSORS virtual profile to eliminate ugly text overlap.
 - [Fixed] Added intelligent event caching to the `HardwareIO` layer, allowing it to poll for short button presses even while the processor is heavily blocked executing the 160ms raw ADC read loops. This completely fixes the unresponsive Short Center press exit bug in the Raw Sensors mode!
+- [Fixed] Allowed `LongCenter` button press to exit the RAW SENSORS page in addition to the short `Center` press, ensuring users who hold the button can still return to the main menu.
