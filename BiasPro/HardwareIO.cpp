@@ -65,7 +65,9 @@ ButtonEvent HardwareIO::readButtonEvent() {
     if (stableMask_ == 0 && pressActive_) {
       pressActive_ = false;
 
-      if (now - lastButtonMillis_ < RepeatGuardMillis || longCenterSent_) {
+      uint32_t guardMillis = ((pressedMask_ & CenterMask) != 0) ? 250UL : RepeatGuardMillis;
+
+      if (now - lastButtonMillis_ < guardMillis || longCenterSent_) {
         return ButtonEvent::None;
       }
 

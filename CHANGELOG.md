@@ -8,5 +8,11 @@
 - [Implemented] Added "RAW SENSORS" (Diagnostic Mode) as an explicit virtual menu item at the end of the Tube Selection carousel, replacing the hidden Long-Center shortcut. Fixed the issue where Long-Center was required to exit Diagnostic mode by assigning the exit action to a standard short Center press, completely bypassing I2C micro-stutter timing issues.
 - [Fixed] Shifted the yellow `30W 55/1000` text leftward on the Tube Selection screen to prevent the trailing zero from wrapping to the next line.
 - [Fixed] Removed the yellow `DIAGNOSTIC` sub-text from the RAW SENSORS virtual profile to eliminate ugly text overlap.
-- [Fixed] Added intelligent event caching to the `HardwareIO` layer, allowing it to poll for short button presses even while the processor is heavily blocked executing the 160ms raw ADC read loops. This completely fixes the unresponsive Short Center press exit bug in the Raw Sensors mode!
+
+## [Unreleased]
+
+### Fixed
+- Fixed bug where short "Center" press in RAW SENSORS mode was unresponsive. Enabled `ButtonEvent::LongCenter` explicitly in `ApplicationController.cpp` to provide a guaranteed exit path via long-hold.
+- Added intelligent event caching to the `HardwareIO` layer, allowing it to poll for short button presses even while the processor is heavily blocked executing the 160ms raw ADC read loops.
+- **Added 250ms debounce guard time specifically to the `Center` button in `HardwareIO.cpp` to prevent switch bouncing (double clicks) that would instantly re-enter the SensorTelemetry screen when exiting.** This completely fixes the unresponsive Short Center press exit bug in the Raw Sensors mode!
 - [Fixed] Allowed `LongCenter` button press to exit the RAW SENSORS page in addition to the short `Center` press, ensuring users who hold the button can still return to the main menu.

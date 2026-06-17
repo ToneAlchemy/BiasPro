@@ -94,16 +94,17 @@ To guarantee a successful compile, you **must** use these exact library versions
 * `Adafruit ST7735 and ST7789 Library` v1.11.0
 * `Adafruit BusIO` v1.17.4
 
-### 2. CRITICAL: 97% Flash Memory Limit & The "Old Bootloader"
-The firmware compiles to approximately **29,824 bytes** (97% of program storage). It will successfully flash to a standard Arduino Nano (Old Bootloader) with very few bytes to spare. 
+### 2. CRITICAL: 97% Flash Memory Limit & Bootloaders
+The firmware compiles to approximately **29,824 bytes** of program storage. This is a very tight fit on older hardware, but it will successfully flash to both new and old Arduino Nanos.
 
-```text
-Sketch uses 29824 bytes (97%) of program storage space. Maximum is 30720 bytes.
-Global variables use 740 bytes (36%) of dynamic memory, leaving 1308 bytes for local variables. Maximum is 2048 bytes.
-```
-
-* **Using a Standard Nano or USB-C Clone:** The firmware will successfully flash to a standard Arduino Nano using the `Processor: ATmega328P (Old Bootloader)` setting in the Arduino IDE. The old bootloader leaves exactly 30,720 bytes of usable flash space, meaning this firmware fits with roughly **896 bytes to spare**. It works perfectly, but you have very little room to add additional features or text without overflowing the memory.
-* **If your upload fails (or you wish to add features):** You will need to upgrade your Nano to the modern *Optiboot* bootloader. To do this, burn the Optiboot bootloader to your Nano using an ISP programmer, and change your board selection in the Arduino IDE from "Arduino Nano" to **"Arduino Uno"**. Optiboot only consumes 0.5KB, which will instantly free up an additional 1.5KB of flash space.
+* **Newer Arduino Nano (Standard Bootloader):** If you have a newer official Nano or a high-quality modern clone, use the `Processor: ATmega328P` setting in the Arduino IDE. These boards use the modern *Optiboot* bootloader, which leaves 32,256 bytes of usable flash space. The firmware will fit easily with roughly **2.4KB to spare**.
+* **Older Arduino Nano & Generic Clones (Old Bootloader):** Many cheaper clones and older Nanos use the legacy bootloader, which takes up more space and leaves exactly 30,720 bytes of usable flash space. The firmware **will still successfully flash** using the `Processor: ATmega328P (Old Bootloader)` setting, fitting with roughly **896 bytes to spare**:
+  ```text
+  Sketch uses 29824 bytes (97%) of program storage space. Maximum is 30720 bytes.
+  Global variables use 740 bytes (36%) of dynamic memory, leaving 1308 bytes for local variables. Maximum is 2048 bytes.
+  ```
+  It works perfectly, but you have very little room to add additional features or text without overflowing the memory.
+* **Need more space on an old Nano?** You can manually upgrade an old Nano to the modern *Optiboot* bootloader using an ISP programmer. Once upgraded, you simply change your board selection in the Arduino IDE to **"Arduino Uno"** to unlock the extra 1.5KB of flash space.
 
 ### 3. EMI & I2C Freeze Protection
 Tube amplifiers are electrically noisy environments. High voltage spikes, flyback EMF, or loose tube socket connections can create strong Electromagnetic Interference (EMI) that can lock up the internal I2C bus connecting the Arduino to the ADS1115 ADC.
