@@ -92,7 +92,6 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 To guarantee a successful compile, you **must** use these exact library versions in the Arduino IDE:
 * `Adafruit GFX Library` v1.12.6
 * `Adafruit ST7735 and ST7789 Library` v1.11.0
-* `Adafruit ADS1X15` v2.6.2
 * `Adafruit BusIO` v1.17.4
 
 ### 2. CRITICAL: 99% Flash Memory Limit & The "Old Bootloader"
@@ -101,14 +100,12 @@ The firmware compiles to approximately **30,702 bytes**. It will successfully fl
 * **Using a Standard Nano or USB-C Clone:** The firmware will successfully flash to a standard Arduino Nano using the `Processor: ATmega328P (Old Bootloader)` setting in the Arduino IDE. The old bootloader leaves exactly 30,720 bytes of usable flash space, meaning this firmware fits with roughly **18 bytes to spare**. It works perfectly, but you cannot add any additional features or text without overflowing the memory.
 * **If your upload fails (or you wish to add features):** You will need to upgrade your Nano to the modern *Optiboot* bootloader. To do this, burn the Optiboot bootloader to your Nano using an ISP programmer, and change your board selection in the Arduino IDE from "Arduino Nano" to **"Arduino Uno"**. Optiboot only consumes 0.5KB, which will instantly free up an additional 1.5KB of flash space.
 
-### 3. Compile-Time Watchdog Timer (WDT)
-The Watchdog Timer (WDT) functionality is **enabled by default** in this firmware configuration.
-* **How to Turn It On/Off:** You can enable or disable the watchdog by editing [Config.h](./BiasPro/Config.h).
-  - **To Enable (On by default):** Ensure `#define BIASPRO_ENABLE_WDT` is defined at the top of [Config.h](./BiasPro/Config.h).
-  - **To Disable:** Comment out or delete that line in [Config.h](./BiasPro/Config.h) (e.g., `//#define BIASPRO_ENABLE_WDT`).
-* **What is it?** The Watchdog Timer (WDT) is a hardware safety feature inside the Arduino's processor that acts like a "Dead Man's Switch." The main code must constantly reset the timer to prevent an automatic system reboot.
-* **Why is it important for Tube Amps?** Tube amplifiers are electrically noisy environments. High voltage spikes, flyback EMF, or loose tube socket connections can create strong Electromagnetic Interference (EMI) that can freeze the I2C bus or display. If WDT is enabled and the system freezes for more than 4 seconds, the Watchdog detects the lockup and automatically reboots the device, restoring live readings immediately.
-* **Note on Boot Loop Issue:** Some cheaper Arduino Nano clones have incompatible bootloaders that crash when the Watchdog Timer is used. If enabling WDT causes your device to loop endlessly on boot, disable it by commenting it out in [Config.h](./BiasPro/Config.h) or upgrade the bootloader to Optiboot.
+### 3. EMI & I2C Freeze Protection
+Tube amplifiers are electrically noisy environments. High voltage spikes, flyback EMF, or loose tube socket connections can create strong Electromagnetic Interference (EMI) that can lock up the internal I2C bus connecting the Arduino to the ADS1115 ADC.
+
+To protect against these EMP-like events, this firmware completely bypasses the standard Adafruit ADC library and manually writes to the I2C registers. More importantly, it utilizes the modern `Wire.setWireTimeout(25000, true)` feature. 
+* **How it works:** If the I2C bus freezes due to interference, the system detects the hang within 25 milliseconds, automatically resets the I2C hardware pins, and immediately resumes reading the Bias probes without ever rebooting the Arduino or losing your place on the screen.
+* **Why no Hardware Watchdog Timer (WDT)?** Older versions of this project used the hardware WDT. However, a severe silicon bug in common LGT8F328P Arduino Nano clones caused the WDT to trigger infinite boot-loop crashes during UI updates. The software-level `Wire` timeout is infinitely more reliable, handles EMI elegantly, and completely avoids these bootloader bugs.
 
 ---
 
@@ -120,10 +117,9 @@ If you are unable to upload the firmware and see an error like `stk500_recv(): p
 * **The Fix:** In the Arduino IDE, go to **Tools > Processor** and change the setting from "ATmega328P" to **"ATmega328P (Old Bootloader)"**. Then try uploading again.
 * *Note:* Newer official Nanos (and USB-C versions) usually use the standard "ATmega328P" setting.
 
-### 2. The "Boot Loop" Issue
-Some older Arduino Nano boards (and many low-cost clones) come with an outdated "Bootloader" that has a bug. This bug prevents the chip from recovering correctly after a Watchdog Reset, causing the device to get stuck in an infinite reboot loop (blinking LED) if `BIASPRO_ENABLE_WDT` is defined.
-* **The Easy Fix:** Keep `BIASPRO_ENABLE_WDT` undefined in the code. This disables WDT to prevent this crash.
-* **The Advanced Fix:** Burn the modern **"Optiboot"** bootloader onto your Nano. This fixes the bug and allows you to safely use WDT safety features.
+### 2. The "Boot Loop" Issue (Legacy Hardware)
+Some older Arduino Nano boards (and many low-cost clones) came with an outdated "Bootloader" that had a bug preventing the chip from recovering correctly after a hardware Watchdog Reset. 
+* **The Fix:** This has been permanently fixed in this modern codebase! We completely stripped out the hardware Watchdog Timer and replaced it with a targeted `Wire.setWireTimeout` bus reset. You should no longer experience infinite boot loops when encountering EMI. If you do, ensure you have correctly installed the `Wire` library updates in the Arduino IDE.
 
 ### 3. Adafruit Display Clones ST7735 1.8" TFT - White Screen / Static / Wrong Colors?
 If your display lights up but shows static, garbage pixels, or wrong colors:

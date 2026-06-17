@@ -1,9 +1,7 @@
 #include "ProtectionSystem.h"
 #include "Config.h"
 
-#ifdef BIASPRO_ENABLE_WDT
-#include <avr/wdt.h>
-#endif
+
 
 namespace {
   float highestProbeVoltage(const BiasReading& reading) {
@@ -21,16 +19,11 @@ namespace {
 
 void ProtectionSystem::begin() {
   locked_ = false;
-
-#ifdef BIASPRO_ENABLE_WDT
-  wdt_enable(WDTO_4S);
-#endif
 }
 
 void ProtectionSystem::serviceWatchdog() {
-#ifdef BIASPRO_ENABLE_WDT
-  wdt_reset();
-#endif
+  // WDT is deprecated due to clone silicon incompatibilities.
+  // We use Wire.setWireTimeout() for I2C freeze protection instead.
 }
 
 bool ProtectionSystem::shouldEnterLockout(

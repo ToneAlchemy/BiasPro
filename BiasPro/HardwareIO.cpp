@@ -1,22 +1,33 @@
 #include "HardwareIO.h"
 #include "Config.h"
 #include "MathCalculations.h"
+#include <Wire.h>
+
 
 bool HardwareIO::begin() {
   pinMode(DeviceConfig::ButtonCenterPin, INPUT_PULLUP);
   pinMode(DeviceConfig::ButtonLeftPin, INPUT_PULLUP);
   pinMode(DeviceConfig::ButtonRightPin, INPUT_PULLUP);
 
-  if (!adc_.begin(DeviceConfig::AdsAddress)) {
+  Wire.begin();
+#if defined(WIRE_HAS_TIMEOUT)
+  Wire.setWireTimeout(25000, true);
+#endif
+  Wire.beginTransmission(DeviceConfig::AdsAddress);
+  if (Wire.endTransmission() != 0) {
     return false;
   }
 
-  adc_.setGain(GAIN_SIXTEEN);
-  adc_.setDataRate(RATE_ADS1115_860SPS);
   return true;
 }
 
 ButtonEvent HardwareIO::readButtonEvent() {
+  if (pendingEvent_ != ButtonEvent::None) {
+    ButtonEvent e = pendingEvent_;
+    pendingEvent_ = ButtonEvent::None;
+    return e;
+  }
+
   const uint32_t now = millis();
   constexpr uint32_t DebounceMillis = 25UL;
   constexpr uint32_t RepeatGuardMillis = 60UL;
@@ -93,10 +104,37 @@ RawAdcFrame HardwareIO::readAdcFrame(uint8_t samples) {
   int32_t plateBTotal = 0;
 
   for (uint8_t index = 0; index < samples; ++index) {
-    cathodeATotal += adc_.readADC_SingleEnded(0);
-    plateATotal += adc_.readADC_SingleEnded(1);
-    cathodeBTotal += adc_.readADC_SingleEnded(2);
-    plateBTotal += adc_.readADC_SingleEnded(3);
+    for (uint16_t i = 0; i < 4; ++i) {
+      uint16_t config = 0x8000 | ((4 + i) << 12) | 0x0A00 | 0x0100 | 0x00E3; 
+      
+      Wire.beginTransmission(DeviceConfig::AdsAddress);
+      Wire.write(0x01);
+      Wire.write((uint8_t)(config >> 8));
+      Wire.write((uint8_t)(config & 0xFF));
+      Wire.endTransmission();
+      
+      delay(2);
+
+      ButtonEvent e = readButtonEvent();
+      if (e != ButtonEvent::None && pendingEvent_ == ButtonEvent::None) {
+        pendingEvent_ = e;
+      }
+      
+      Wire.beginTransmission(DeviceConfig::AdsAddress);
+      Wire.write(0x00);
+      Wire.endTransmission();
+      Wire.requestFrom((uint8_t)DeviceConfig::AdsAddress, (uint8_t)2);
+      
+      int16_t val = 0;
+      if (Wire.available() == 2) {
+          val = (Wire.read() << 8) | Wire.read();
+      }
+
+      if (i == 0) cathodeATotal += val;
+      else if (i == 1) plateATotal += val;
+      else if (i == 2) cathodeBTotal += val;
+      else if (i == 3) plateBTotal += val;
+    }
   }
 
   RawAdcFrame frame;

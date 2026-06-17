@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Arduino.h>
-#include <Adafruit_ADS1X15.h>
 #include "DomainTypes.h"
 
 class HardwareIO {
@@ -12,7 +11,6 @@ public:
   SensorTelemetryFrame readSensorTelemetry(uint8_t samples);
 
 private:
-  Adafruit_ADS1115 adc_;
   uint32_t lastButtonMillis_ = 0;
   uint32_t lastRawChangeMillis_ = 0;
   uint32_t pressStartMillis_ = 0;
@@ -21,4 +19,5 @@ private:
   uint8_t pressedMask_ = 0;
   bool pressActive_ = false;
   bool longCenterSent_ = false;
+  ButtonEvent pendingEvent_ = ButtonEvent::None;
 };

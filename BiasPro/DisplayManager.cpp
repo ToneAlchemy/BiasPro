@@ -11,10 +11,10 @@ constexpr uint16_t ColorInfo = ST7735_CYAN;
 void printProbeStatus(Adafruit_ST7735 &tft, ProbeStatus status) {
   if (status == ProbeStatus::Ok) {
     tft.setTextColor(ColorGood, ST7735_BLACK);
-    tft.print(F("OK"));
+    tft.print(F("OK  "));
   } else if (status == ProbeStatus::Saturating) {
     tft.setTextColor(ColorBad, ST7735_BLACK);
-    tft.print(F("OVR"));
+    tft.print(F("OVR "));
   } else {
     tft.setTextColor(ColorWarn, ST7735_BLACK);
     tft.print(F("ZERO"));
@@ -143,7 +143,9 @@ void DisplayManager::updateTubeSelection(const TubeProfile *profiles,
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
   tft_.setCursor(18, 52);
 
-  if (count > 0 && selectedIndex < count) {
+  if (selectedIndex == count) {
+    tft_.print(F("RAW SENSORS"));
+  } else if (count > 0 && selectedIndex < count) {
     tft_.print(profiles[selectedIndex].label);
   } else {
     tft_.print(F("NONE"));
@@ -151,9 +153,11 @@ void DisplayManager::updateTubeSelection(const TubeProfile *profiles,
 
   tft_.setTextSize(1);
   tft_.setTextColor(ST7735_YELLOW, ST7735_BLACK);
-  tft_.setCursor(96, 57);
+  tft_.setCursor(80, 57);
 
-  if (count > 0 && selectedIndex < count) {
+  if (selectedIndex == count) {
+    // Intentionally empty: RAW SENSORS spans the entire row
+  } else if (count > 0 && selectedIndex < count) {
     tft_.print(profiles[selectedIndex].maxDissipationWatts);
     tft_.print(F("W"));
   } else {
@@ -306,8 +310,6 @@ void DisplayManager::drawSensorTelemetryFrame() {
 void DisplayManager::updateSensorTelemetryValues(
     const SensorTelemetryFrame &telemetry) {
   tft_.setTextSize(1);
-  tft_.fillRect(46, 22, 112, 42, ST7735_BLACK);
-  tft_.fillRect(46, 75, 112, 42, ST7735_BLACK);
 
   tft_.setCursor(134, 22);
   printProbeStatus(tft_, telemetry.probeA);
@@ -315,17 +317,19 @@ void DisplayManager::updateSensorTelemetryValues(
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
   tft_.setCursor(46, 37);
   tft_.print(telemetry.counts.cathodeA);
+  tft_.print(F("    "));
   tft_.setCursor(92, 37);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.cathodeA));
-  tft_.print(F("mV"));
+  tft_.print(F("mV    "));
 
   tft_.setCursor(46, 51);
   tft_.print(telemetry.counts.plateA);
+  tft_.print(F("    "));
   tft_.setCursor(92, 51);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.plateA));
-  tft_.print(F("mV"));
+  tft_.print(F("mV    "));
 
   tft_.setCursor(134, 75);
   printProbeStatus(tft_, telemetry.probeB);
@@ -333,17 +337,19 @@ void DisplayManager::updateSensorTelemetryValues(
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
   tft_.setCursor(46, 90);
   tft_.print(telemetry.counts.cathodeB);
+  tft_.print(F("    "));
   tft_.setCursor(92, 90);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.cathodeB));
-  tft_.print(F("mV"));
+  tft_.print(F("mV    "));
 
   tft_.setCursor(46, 104);
   tft_.print(telemetry.counts.plateB);
+  tft_.print(F("    "));
   tft_.setCursor(92, 104);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.plateB));
-  tft_.print(F("mV"));
+  tft_.print(F("mV    "));
 }
 
 void DisplayManager::drawProfileManager(const TubeProfile *profiles,
@@ -389,7 +395,7 @@ void DisplayManager::updateProfileManagerSelection(const TubeProfile *profiles,
 
   tft_.setTextSize(1);
   tft_.setTextColor(ST7735_YELLOW, ST7735_BLACK);
-  tft_.setCursor(95, 55);
+  tft_.setCursor(80, 55);
 
   if (count > 0 && selectedIndex < count) {
     tft_.print(profiles[selectedIndex].maxDissipationWatts);

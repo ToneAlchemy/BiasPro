@@ -1,6 +1,5 @@
 #pragma once
 
-#define BIASPRO_ENABLE_WDT
 
 #include <Arduino.h>
 

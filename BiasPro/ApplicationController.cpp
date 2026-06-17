@@ -76,6 +76,7 @@ void ApplicationController::tick() {
   protection_.serviceWatchdog();
 
   const uint32_t now = millis();
+  
 
   if (startupUntilMillis_ != 0 && static_cast<int32_t>(now - startupUntilMillis_) < 0) {
     return;
@@ -84,6 +85,13 @@ void ApplicationController::tick() {
   if (startupUntilMillis_ != 0) {
     startupUntilMillis_ = 0;
     screenNeedsPaint_ = true;
+
+    // Jump to calibration if Left button is held during startup
+    if (digitalRead(DeviceConfig::ButtonLeftPin) == LOW) {
+      activeScreen_ = ScreenId::Calibration;
+      calibrationField_ = 0;
+      return;
+    }
   }
 
   if (!hardwareReady_) {
@@ -97,32 +105,38 @@ void ApplicationController::tick() {
   const ButtonEvent event = hardware_.readButtonEvent();
 
   if (activeScreen_ == ScreenId::TubeSelect) {
-    if (event == ButtonEvent::Left && profileCount_ > 0) {
-      selectedProfile_ = selectedProfile_ == 0 ? profileCount_ - 1 : selectedProfile_ - 1;
+    if (event == ButtonEvent::Left) {
+      selectedProfile_ = selectedProfile_ == 0 ? profileCount_ : selectedProfile_ - 1;
       if (screenNeedsPaint_) {
         display_.drawTubeSelection(profiles_, profileCount_, selectedProfile_);
         screenNeedsPaint_ = false;
       } else {
         display_.updateTubeSelection(profiles_, profileCount_, selectedProfile_);
       }
-    } else if (event == ButtonEvent::Right && profileCount_ > 0) {
+    } else if (event == ButtonEvent::Right) {
       selectedProfile_ = selectedProfile_ + 1;
-      if (selectedProfile_ >= profileCount_) selectedProfile_ = 0;
+      if (selectedProfile_ > profileCount_) selectedProfile_ = 0;
       if (screenNeedsPaint_) {
         display_.drawTubeSelection(profiles_, profileCount_, selectedProfile_);
         screenNeedsPaint_ = false;
       } else {
         display_.updateTubeSelection(profiles_, profileCount_, selectedProfile_);
       }
-    } else if (event == ButtonEvent::Center && profileCount_ > 0) {
-      activeScreen_ = ScreenId::LiveBias;
+    } else if (event == ButtonEvent::Center) {
+      if (selectedProfile_ == profileCount_) {
+        activeScreen_ = ScreenId::SensorTelemetry;
+      } else {
+        activeScreen_ = ScreenId::LiveBias;
+      }
       screenNeedsPaint_ = true;
       lastRefreshMillis_ = 0;
       return;
     } else if (event == ButtonEvent::LongCenter) {
-      activeScreen_ = ScreenId::ProfileManager;
-      screenNeedsPaint_ = true;
-      return;
+      if (selectedProfile_ < profileCount_) {
+        activeScreen_ = ScreenId::ProfileManager;
+        screenNeedsPaint_ = true;
+        return;
+      }
     }
 
     if (screenNeedsPaint_) {
@@ -137,13 +151,6 @@ void ApplicationController::tick() {
     if (event == ButtonEvent::Center) {
       activeScreen_ = ScreenId::TubeSelect;
       screenNeedsPaint_ = true;
-      return;
-    }
-
-    if (event == ButtonEvent::LongCenter) {
-      activeScreen_ = ScreenId::SensorTelemetry;
-      screenNeedsPaint_ = true;
-      lastRefreshMillis_ = 0;
       return;
     }
 
@@ -208,7 +215,7 @@ void ApplicationController::tick() {
   }
 
   if (activeScreen_ == ScreenId::SensorTelemetry) {
-    if (event == ButtonEvent::Center || event == ButtonEvent::LongCenter) {
+    if (event == ButtonEvent::Center) {
       if (protection_.isLocked()) {
         activeScreen_ = ScreenId::FaultLockout;
       } else {
