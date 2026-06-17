@@ -6,11 +6,11 @@ This firmware was completely re-architected from scratch using modern, memory-sa
 
 | **1. Splash Screen** | **2. Tube Select** | **3. Live Bias Mode** |
 | :---: | :---: | :---: |
-| <img src="./IMAGES/Splash_Screen.jpg" width="250" height="200"> | <img src="./IMAGES/Select_Tube-To-Bias.jpg" width="250" height="200"> | <img src="./IMAGES/Bias_Meter_Live.jpg"  width="250" height="200"> |
-| **4.  Calibration Voltage Scale** | **5. Calibration Shunt Resistor** | **6. Calibration Voltage Limiter** |
-| <img src="./IMAGES/Calibrate-Bias_Probe_A-Voltage_Scale.jpg" width="250" height="200"> | <img src="./IMAGES/Calibrate-Bias_Probe_A-Shunt-Resistor.jpg" width="250" height="200"> | <img src="./IMAGES/Calibrate-Voltage_Limiter.jpg" width="250" height="200"> |
-| **7. Tube Manager** | **8. Tube Manager - Editor** | **9. Tube Manager - Delete a Profile** |
-| <img src="./IMAGES/Tube_Manager-Main-Menu.jpg" width="250" height="200"> | <img src="./IMAGES/Tube_Manager-Edited_Selected_Profile.jpg" width="250" height="200"> | <img src="./IMAGES/Tube-Manager-Delete_Profile.jpg" width="250" height="200"> |
+| <img src="./IMAGES/Splash_Screen.jpg" width="250" height="200"> | <img src="./IMAGES/SELECT_PROFILE.jpg" width="250" height="200"> | <img src="./IMAGES/LIVEBIAS.jpg"  width="250" height="200"> |
+| **4.  Calibration** | **5. Profiles Manager** | **6. Profile Edit** |
+| <img src="./IMAGES/CALIBRATION.jpg" width="250" height="200"> | <img src="./IMAGES/PROFILES.jpg" width="250" height="200"> | <img src="./IMAGES/PROFILE_EDIT.jpg" width="250" height="200"> |
+| **7. EDIT PROFILE** | **8. BiasPro Enclosure** | **9. BiasPro - Setup** |
+| <img src="./IMAGES/EDIT_PROFILE.jpg" width="250" height="200"> | <img src="./IMAGES/BiasPro.jpg" width="250" height="200"> | <img src="./IMAGES/BiasPro_Setup.jpg" width="250" height="200"> |
 
 ---
 
@@ -360,6 +360,16 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 * **Left / Right Buttons:** Scroll through menus or adjust values.
 * **Center Button (Short Click):** Select an item, confirm an edit, or advance to the next field.
 * **Center Button (Long Hold):** Open the Tool Menu, access Sensor Telemetry, or return to the main screen.
+
+### RAW SENSORS (Diagnostics Mode)
+At the very end of the Tube Selection menu, there is a special **"RAW SENSORS"** profile. Selecting this enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.
+
+* **Raw ADC Counts (e.g., `CATH: 5254`):** These are the unconverted digital integer values read directly from the ADS1115 chip. The chip measures the physical voltage and outputs a proportional number ranging from `-32768` to `+32767`.
+* **Millivolts (e.g., `41.04mV`):** The system mathematically converts the raw integer count into actual millivolts (`mV`). 
+   * For the **Cathode**, this millivolt reading translates directly into Milliamps (mA) due to the 1Ω shunt resistor. 
+   * For the **Plate**, this millivolt reading is later multiplied by your calibrated Voltage Scale Factor to calculate the true High Voltage.
+
+This screen is highly useful for troubleshooting probe connections, checking for ADC noise, or manually verifying the calibration math.
 
 ### Firmware Quirks (By Design)
 

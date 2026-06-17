@@ -284,10 +284,10 @@ void DisplayManager::drawSensorTelemetryFrame() {
 
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
   tft_.setCursor(14, 37);
-  tft_.print(F("CATH"));
+  tft_.print(F("CATH:"));
 
   tft_.setCursor(14, 51);
-  tft_.print(F("PLATE"));
+  tft_.print(F("PLATE:"));
 
   tft_.fillRect(0, 67, 160, 1, ColorPanel);
 
@@ -297,10 +297,10 @@ void DisplayManager::drawSensorTelemetryFrame() {
 
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
   tft_.setCursor(14, 90);
-  tft_.print(F("CATH"));
+  tft_.print(F("CATH:"));
 
   tft_.setCursor(14, 104);
-  tft_.print(F("PLATE"));
+  tft_.print(F("PLATE:"));
 
   tft_.setTextColor(ColorInfo, ST7735_BLACK);
   tft_.setCursor(4, 119);
@@ -315,18 +315,18 @@ void DisplayManager::updateSensorTelemetryValues(
   printProbeStatus(tft_, telemetry.probeA);
 
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
-  tft_.setCursor(46, 37);
+  tft_.setCursor(54, 37);
   tft_.print(telemetry.counts.cathodeA);
   tft_.print(F("    "));
-  tft_.setCursor(92, 37);
+  tft_.setCursor(100, 37);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.cathodeA));
   tft_.print(F("mV    "));
 
-  tft_.setCursor(46, 51);
+  tft_.setCursor(54, 51);
   tft_.print(telemetry.counts.plateA);
   tft_.print(F("    "));
-  tft_.setCursor(92, 51);
+  tft_.setCursor(100, 51);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.plateA));
   tft_.print(F("mV    "));
@@ -335,18 +335,18 @@ void DisplayManager::updateSensorTelemetryValues(
   printProbeStatus(tft_, telemetry.probeB);
 
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
-  tft_.setCursor(46, 90);
+  tft_.setCursor(54, 90);
   tft_.print(telemetry.counts.cathodeB);
   tft_.print(F("    "));
-  tft_.setCursor(92, 90);
+  tft_.setCursor(100, 90);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.cathodeB));
   tft_.print(F("mV    "));
 
-  tft_.setCursor(46, 104);
+  tft_.setCursor(54, 104);
   tft_.print(telemetry.counts.plateB);
   tft_.print(F("    "));
-  tft_.setCursor(92, 104);
+  tft_.setCursor(100, 104);
   printFixedHundredth(tft_,
                       adcCountToHundredthMillivolts(telemetry.counts.plateB));
   tft_.print(F("mV    "));
