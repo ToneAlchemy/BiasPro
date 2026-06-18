@@ -150,7 +150,7 @@ Change it to one of the following and re-upload until the screen looks correct:
 
 This project is written as a standard Arduino sketch (`.ino`) and was developed using the official **Arduino IDE**.
 
-* **Recommended Method:** We strongly recommend using the **Arduino IDE** for the easiest setup. Its built-in *Library Manager* (Tools > Manage Libraries) makes it simple to install the required dependencies (Adafruit GFX, ADS1X15, etc.) without complex manual configuration.
+* **Recommended Method:** We strongly recommend using the **Arduino IDE** for the easiest setup. Its built-in *Library Manager* (Tools > Manage Libraries) makes it simple to install the required dependencies (e.g., Adafruit GFX) without complex manual configuration.
 
 * **Alternative IDEs:** Advanced users can compile this code in other environments, such as **Visual Studio Code (with PlatformIO)** or **Microchip Studio**. However, please note that you will need to manually manage library paths and dependencies.
 * **📥 Download Official Arduino IDE:** [Download Official Arduino IDE](https://www.arduino.cc/en/software)
@@ -418,7 +418,7 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 1. **Library Dependencies:** Install the following via the Arduino IDE Library Manager:
    - `Adafruit GFX Library`
    - `Adafruit ST7735 and ST7789 Library`
-   - `Adafruit ADS1X15`
+   - `Adafruit BusIO`
 
 2. **Hardware Setup:**
    - **ADS1115:** Connect via I2C (SDA -> A4, SCL -> A5).
@@ -435,7 +435,7 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 
 * **Left / Right Buttons:** Scroll through menus or adjust values.
 * **Center Button (Short Click):** Select an item, confirm an edit, or advance to the next field.
-* **Center Button (Long Hold):** Open the Tool Menu, access Sensor Telemetry, or return to the main screen.
+* **Center Button (Long Hold):** Open the Tool Menu or return to the main screen.
 
 ### RAW SENSORS (Diagnostics Mode)
 At the very end of the Tube Selection menu, there is a special **"RAW SENSORS"** profile. Selecting this enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.
