@@ -1,6 +1,6 @@
 # 🎛️ Arduino Tube Amp BiasPro
 
-This repository contains the complete, mathematically hardened firmware for a professional-grade, dual-probe vacuum tube bias meter. Designed for guitar amplifier technicians, this tool provides real-time, high-resolution measurements of Plate Voltage, Cathode Current, and True Plate Dissipation (Watts & %) for power tubes (e.g., 6L6GC, EL34, 6V6, KT88).
+This repository contains the complete, mathematically hardened firmware for a professional-grade, dual-probe vacuum tube BiasPro. Designed for guitar amplifier technicians, this tool provides real-time, high-resolution measurements of Plate Voltage, Cathode Current, and True Plate Dissipation (Watts & %) for power tubes (e.g., 6L6GC, EL34, 6V6, KT88).
 
 This firmware was completely re-architected from scratch using modern, memory-safe embedded C++ principles to eliminate dynamic memory leaks and ensure rock-solid physical safety lockouts.
 
@@ -98,19 +98,23 @@ To guarantee a successful compile, you **must** use these exact library versions
 The firmware compiles to approximately **29,824 bytes** of program storage. This is a very tight fit on older hardware, but it will successfully flash to both new and old Arduino Nanos.
 
 * **Newer Arduino Nano (Standard Bootloader):** If you have a newer official Nano or a high-quality modern clone, use the `Processor: ATmega328P` setting in the Arduino IDE. These boards use the modern *Optiboot* bootloader, which leaves 32,256 bytes of usable flash space. The firmware will fit easily with roughly **2.4KB to spare**.
+
 * **Older Arduino Nano & Generic Clones (Old Bootloader):** Many cheaper clones and older Nanos use the legacy bootloader, which takes up more space and leaves exactly 30,720 bytes of usable flash space. The firmware **will still successfully flash** using the `Processor: ATmega328P (Old Bootloader)` setting, fitting with roughly **896 bytes to spare**:
   ```text
   Sketch uses 29824 bytes (97%) of program storage space. Maximum is 30720 bytes.
   Global variables use 740 bytes (36%) of dynamic memory, leaving 1308 bytes for local variables. Maximum is 2048 bytes.
   ```
   It works perfectly, but you have very little room to add additional features or text without overflowing the memory.
+
 * **Need more space on an old Nano?** You can manually upgrade an old Nano to the modern *Optiboot* bootloader using an ISP programmer. Once upgraded, you simply change your board selection in the Arduino IDE to **"Arduino Uno"** to unlock the extra 1.5KB of flash space.
 
 ### 3. EMI & I2C Freeze Protection
 Tube amplifiers are electrically noisy environments. High voltage spikes, flyback EMF, or loose tube socket connections can create strong Electromagnetic Interference (EMI) that can lock up the internal I2C bus connecting the Arduino to the ADS1115 ADC.
 
 To protect against these EMP-like events, this firmware completely bypasses the standard Adafruit ADC library and manually writes to the I2C registers. More importantly, it utilizes the modern `Wire.setWireTimeout(25000, true)` feature. 
+
 * **How it works:** If the I2C bus freezes due to interference, the system detects the hang within 25 milliseconds, automatically resets the I2C hardware pins, and immediately resumes reading the Bias probes without ever rebooting the Arduino or losing your place on the screen.
+
 * **Why no Hardware Watchdog Timer (WDT)?** Older versions of this project used the hardware WDT. However, a severe silicon bug in common LGT8F328P Arduino Nano clones caused the WDT to trigger infinite boot-loop crashes during UI updates. The software-level `Wire` timeout is infinitely more reliable, handles EMI elegantly, and completely avoids these bootloader bugs.
 
 ---
@@ -119,17 +123,22 @@ To protect against these EMP-like events, this firmware completely bypasses the 
 
 ### 1. Upload Failed? (stk500 Error)
 If you are unable to upload the firmware and see an error like `stk500_recv(): programmer is not responding`:
+
 * **The Cause:** You are likely using an older Arduino Nano (or a generic clone) that uses the legacy bootloader.
+
 * **The Fix:** In the Arduino IDE, go to **Tools > Processor** and change the setting from "ATmega328P" to **"ATmega328P (Old Bootloader)"**. Then try uploading again.
 * *Note:* Newer official Nanos (and USB-C versions) usually use the standard "ATmega328P" setting.
 
 ### 2. The "Boot Loop" Issue (Legacy Hardware)
 Some older Arduino Nano boards (and many low-cost clones) came with an outdated "Bootloader" that had a bug preventing the chip from recovering correctly after a hardware Watchdog Reset. 
+
 * **The Fix:** This has been permanently fixed in this modern codebase! We completely stripped out the hardware Watchdog Timer and replaced it with a targeted `Wire.setWireTimeout` bus reset. You should no longer experience infinite boot loops when encountering EMI. If you do, ensure you have correctly installed the `Wire` library updates in the Arduino IDE.
 
 ### 3. Adafruit Display Clones ST7735 1.8" TFT - White Screen / Static / Wrong Colors?
 If your display lights up but shows static, garbage pixels, or wrong colors:
+
 * **The Cause:** You likely have a "Green Tab" or "Red Tab" clone display. The plastic tab on the screen protector often indicates the internal driver version.
+
 * **The Fix:** Open the firmware source code (`DisplayManager.cpp` or main `.ino` configuration) and find the initialization line: `tft.initR(INITR_18BLACKTAB);` 
 Change it to one of the following and re-upload until the screen looks correct:
   * `tft.initR(INITR_18GREENTAB);`
@@ -142,6 +151,7 @@ Change it to one of the following and re-upload until the screen looks correct:
 This project is written as a standard Arduino sketch (`.ino`) and was developed using the official **Arduino IDE**.
 
 * **Recommended Method:** We strongly recommend using the **Arduino IDE** for the easiest setup. Its built-in *Library Manager* (Tools > Manage Libraries) makes it simple to install the required dependencies (Adafruit GFX, ADS1X15, etc.) without complex manual configuration.
+
 * **Alternative IDEs:** Advanced users can compile this code in other environments, such as **Visual Studio Code (with PlatformIO)** or **Microchip Studio**. However, please note that you will need to manually manage library paths and dependencies.
 * **📥 Download Official Arduino IDE:** [Download Official Arduino IDE](https://www.arduino.cc/en/software)
 
@@ -172,7 +182,7 @@ BiasPro introduces professional-grade data integrity and safety features not fou
 
 ## 🧠 How It Works (Theory of Operation)
 
-For those interested in the engineering, here is how the Bias Meter safely measures high-voltage tube amplifiers.
+For those interested in the engineering, here is how the BiasPro safely measures high-voltage tube amplifiers.
 
 ### 1. Measuring Plate Voltage (The Voltage Divider)
 The Arduino cannot measure 500V directly.
@@ -183,12 +193,16 @@ The Arduino cannot measure 500V directly.
 ### 2. Measuring Bias Current (The Shunt Resistor)
 To measure current, we use **Ohm's Law** (`V = I × R`).
 * **The Circuit:** The tube's cathode current flows through a precision **1Ω Shunt Resistor** to ground.
+
 * **The Measurement:** The current flowing through the resistor creates a tiny voltage drop across it (e.g., 35mA of current creates 35mV).
+
 * **The ADC:** The high-precision **ADS1115 ADC** measures this tiny voltage drop with extreme accuracy. The Arduino then converts that millivolt reading directly into milliamps (since 1mV = 1mA across a 1Ω resistor).
 
 ### 3. Calculating Dissipation (The Wattage)
 Once the system knows the Voltage (V) and the Current (I), it calculates the Plate Dissipation in real-time.
+
 * **Formula:** `Watts = Plate Voltage × Plate Current`
+
 * **Screen Correction:** If enabled, the system first subtracts the estimated Screen Current from the total current to ensure the Wattage displayed is for the **Plate only**, providing the most accurate bias reading possible.
 
 ---
@@ -205,7 +219,7 @@ Once the system knows the Voltage (V) and the Current (I), it calculates the Pla
 | - | Hook-up Wire | 22 AWG for internals |
 | 2 | Bias Probes | Octal (8-pin) probes (e.g., TubeDepot Bias Scout or DIY) |
 
-* **Download Link:** [Bill of Materials (BOM) for the BIASMETER.txt](./HARDWARE%20-%20PCB%20KICAD/Bill%20of%20Materials%20(BOM)%20for%20the%20BIASMETER.txt)
+* **Download Link:** [Bill of Materials (BOM) for the BiasPro.txt](./HARDWARE%20-%20PCB%20KICAD/Bill%20of%20Materials%20(BOM)%20for%20the%20BiasPro.txt)
 
 ---
 
@@ -214,38 +228,54 @@ Once the system knows the Voltage (V) and the Current (I), it calculates the Pla
 Before sourcing parts, please review these critical hardware constraints to ensure your build works correctly.
 
 ### 1. ADC Module: ADS1115 Only (No ADS1015)
+
 * **⚠️ CRITICAL:** You **MUST** use the **ADS1115 (16-Bit)** ADC module.
+
 * **Do NOT use the ADS1015:** This is a cheaper, 12-bit version that looks identical.
+
 * **The Issue:** The firmware uses a specific multiplier (`0.0078125 mV/bit`) calculated for 16-bit resolution. If you use an ADS1015, your bias readings will be incorrect by a factor of 16.
 
 ### 2. Display: ST7735 TFT Only (No OLEDs)
+
 * **Required:** Adafruit **ST7735 1.8" Color TFT** (or compatible).
+
 * **Not Supported:** This firmware is **NOT** compatible with monochrome OLED displays (SSD1306 or SH1106) used in other versions.
 
 ### 3. Arduino Nano Bootloader
+
 * **Recommendation:** We recommend buying an Arduino Nano with the modern **Optiboot** bootloader (often found on USB-C versions) to avoid Watchdog Timer boot loops if WDT is enabled.
 
 ### 4. Power Source (No Heater Power)
 * **Supported:** Isolated USB Wall Charger or 9V Battery.
+
 * **Not Supported:** Do **NOT** attempt to power this unit directly from the amplifier's 6.3V AC heater lines.
+
 * **The Risk:** This hardware revision does not include the necessary rectification circuitry. Connecting heater lines to the Arduino will destroy the unit.
 
 ### 5. Isolation Transformers & USB
-* **Clarification:** Even if you plug the amplifier into an **Isolation Transformer**, it is **STILL UNSAFE** to connect the Bias Meter's USB port to a computer while probing.
+
+* **Clarification:** Even if you plug the amplifier into an **Isolation Transformer**, it is **STILL UNSAFE** to connect the BiasPro's USB port to a computer while probing.
+
 * **The Physics:** Most isolation transformers pass the **Earth Ground** pin straight through. This means the Ground Loop danger persists. **Never connect USB to a PC while the probes are in an amp. If you do so, you do it at your own risk!**
 
 ### 🛠️ Building the Probes (Recommended Kit)
+
 We highly recommend the **Tube Depot Bias Scout Kit** for your hardware. It provides a professional, safe, and robust enclosure for the socket and resistor.
+
 * **Product Link:** [Tube Depot Bias Scout Kit](https://www.tubedepot.com/products/tubedepot-bias-scout-kit)
+
 * **Assembly Manual:** [Download PDF Instructions](https://s3.amazonaws.com/tubedepot-com-production/spree/attached_files/td_bias_scout_assy_manual_v3.2.pdf)
 
 **Assembly Notes for this Project:**
+
 1. **The Resistor:** The kit includes a **1Ω 1W resistor**. This is perfect for this project and matches the default calibration (1.00Ω).
+
 2. **Wiring Colors:** If you follow the standard instructions, the output plugs will match this project's wiring guide:
    - **Red:** Plate Voltage (Connect to PCB `V_IN` via voltage divider).
    - **Black:** Ground (Connect to PCB `GND`).
    - **White:** Cathode Current (Connect to PCB `ADC_IN`).
-3. **Connection:** You can either cut the banana plugs off and wire them directly to your PCB/Enclosure, or install female banana jacks on your Bias Meter enclosure for a detachable probe.
+
+3. **Connection:** You can either cut the banana plugs off and wire them directly to your PCB/Enclosure, or install female banana jacks on your BiasPro enclosure for a detachable probe.
 
 ---
 
@@ -254,10 +284,13 @@ We highly recommend the **Tube Depot Bias Scout Kit** for your hardware. It prov
 A custom enclosure has been designed to house the Arduino Nano, Display, and Buttons safely.
 
 * **Design Platform:** TinkerCAD
-* **Editable Source:** [Bias Meter Enclosure V11 Files](https://www.tinkercad.com/things/gKRXVebJSTF/edit?sharecode=gUTg7qwfboPwH2RXnympp6uQYQx4FWwdrr1dFZcTKMg) *(Note: You must be logged into Tinkercad to access this link)*
-* **Ready-to-Print Files:** [BiasMeter_Enclosure_STL](./HARDWARE%20-%20PCB%20KICAD/BiasMeter_Enclosure_STL)
+
+* **Editable Source:** [BiasPro Enclosure V11 Files](https://www.tinkercad.com/things/gKRXVebJSTF/edit?sharecode=gUTg7qwfboPwH2RXnympp6uQYQx4FWwdrr1dFZcTKMg) *(Note: You must be logged into Tinkercad to access this link)*
+
+* **Ready-to-Print Files:** [BiasPro_Enclosure_STL](./HARDWARE%20-%20PCB%20KICAD/BiasPro_Enclosure_STL)
   
 **Printing Notes:**
+
 You can export the `.STL` files directly from the link above. Standard PLA or PETG is suitable for this project. The case is designed to keep the low-voltage electronics isolated and secure.
 
 ---
@@ -267,20 +300,23 @@ You can export the `.STL` files directly from the link above. Standard PLA or PE
 For a cleaner build and enhanced reliability, a custom PCB has been designed to replace hand-wiring. This board hosts the Arduino Nano, ADS1115, and input connectors.
 
 ### Key Hardware Features
+
 * **Hardware Input Protection:** The board includes **1N4733A Zener Diodes (5.1V)** on the probe inputs. These clamp any incoming voltage spikes to ~5.1V, protecting the sensitive ADS1115 ADC from damage in case of a tube failure or surge.
+
 * **Simplified Assembly:** Eliminates the "rat's nest" of wires common in DIY builds.
+
 * **Fabrication Ready:** You can use the provided Gerber/KiCad files to order these boards from any fabrication house (e.g., PCBWay, JLCPCB, OSH Park).
 
 ### PCB Board Views
-![PCB Board Layout](./HARDWARE%20-%20PCB%20KICAD/BiasMeter_InputProtection.png)
+![PCB Board Layout](./HARDWARE%20-%20PCB%20KICAD/BiasPro_InputProtection.png)
 
 ### PCB Board Components Views
-![PCB Board Layout - Components](./HARDWARE%20-%20PCB%20KICAD/BiasMeter_InputProtection_v3_3dView.png)
+![PCB Board Layout - Components](./HARDWARE%20-%20PCB%20KICAD/BiasPro_InputProtection_v3_3dView.png)
 
 ### Schematic layout
-![PCB Schematic](./HARDWARE%20-%20PCB%20KICAD/BiasMeter_Schematic.png)
+![PCB Schematic](./HARDWARE%20-%20PCB%20KICAD/BiasPro_Schematic.png)
 
-* **Download Link:** [BiasMeter - KICAD](./HARDWARE%20-%20PCB%20KICAD/BiasMeter%20-%20KICAD)
+* **Download Link:** [BiasPro - KICAD](./HARDWARE%20-%20PCB%20KICAD/BiasPro%20-%20KICAD)
   
 **📥 Get KiCad Software:** [Download Official KiCad](https://www.kicad.org)
 
@@ -305,9 +341,11 @@ For a cleaner build and enhanced reliability, a custom PCB has been designed to 
 | | GND | GND |
 
 ### Arduino Nano Pinout 
+
 ![Arduino Nano Pinout](./IMAGES/nano_pinout.jpg)
 
 ### 🔌 Probe Wiring (Octal Sockets)
+
 If you are building your own probes, correct wiring is essential for the math to work.
 * **Pin 3 (Plate):** Connects to the Voltage Divider.
 * **Pin 8 (Cathode):** Connects to the Shunt Resistor (and Ground).
@@ -321,27 +359,37 @@ If you are building your own probes, correct wiring is essential for the math to
 
 ## Powering the Device (Crucial Safety Info)
 
-Correctly powering the Arduino Nano is critical to prevent damage to your computer, the bias meter, or the amplifier.
+Correctly powering the Arduino Nano is critical to prevent damage to your computer, the BiasPro, or the amplifier.
 
 ### 1. Recommended: Separate USB Power Adapter
+
 The safest way to power this device during use is with a dedicated USB wall charger (like a standard phone charger).
 * **Specs:** 5V Output, at least 500mA (0.5A).
+
 * **Connector:** Mini-USB or USB-C (for Nano).
+
 * **⚠️ IMPORTANT - 2-Prong Only:** You must use a charger that has only **2 prongs** (ungrounded).
     * **Why?** Tube amplifiers are grounded to Earth. If you use a grounded (3-prong) power adapter for the Arduino, you may create a **Ground Loop**. This can introduce noise, cause erratic readings, or in worst-case scenarios, short high voltage to ground through your low-voltage electronics. A 2-prong adapter is "floating," which isolates the meter from Earth ground.
 
 ### 2. Battery Power (9V)
+
 You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
+
 * **Pros:** Complete electrical isolation (100% safe from ground loops), portable, zero mains noise.
 * **Cons:** The Arduino, Display, and ADC consume current constantly. A standard 9V battery may drain relatively quickly.
 
 ### 3. ⚠️ WARNING: Computer USB Port
-**DO NOT** power the bias meter from your computer's USB port while it is connected to an amplifier.
+
+**DO NOT** power the BiasPro from your computer's USB port while it is connected to an amplifier.
+
 * **The Danger:** Desktop computers (and many laptops) are grounded. Connecting the USB cable ties the Arduino's Ground to the Computer's Earth Ground. Since the Probe's Ground is connected to the Amp's Ground, you create a direct Ground Loop.
+
 * **Risk:** If a probe accident occurs or there is a voltage potential difference, high current could flow through the USB cable, destroying your computer's motherboard, the Arduino, or the amplifier.
 
 #### When is Computer USB safe?
+
 * **Uploads:** It is safe to connect to the computer to upload code **ONLY IF** the bias probes are **disconnected** from the amplifier.
+
 * **Debugging:** You can use the Arduino IDE Serial Monitor to view debug logs, but **ensure the probes are NOT connected to a live amplifier**. If you must debug a live circuit, you must use a **USB Isolator** to protect your equipment.
 
 ---
@@ -352,10 +400,12 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
    - `Adafruit GFX Library`
    - `Adafruit ST7735 and ST7789 Library`
    - `Adafruit ADS1X15`
+
 2. **Hardware Setup:**
    - **ADS1115:** Connect via I2C (SDA -> A4, SCL -> A5).
    - **TFT Display:** Connect via SPI (Pins 8, 9, 10, 11, 13 defined in code).
    - **Buttons:** Connect to Digital Pins 5 (Left), 6 (Right), and 7 (Center/Select).
+
 3. **Upload:** Flash the `BiasPro` firmware to your Arduino Nano.
 
 ---
@@ -363,6 +413,7 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 ## User Guide & Navigation
 
 ### Basic Navigation
+
 * **Left / Right Buttons:** Scroll through menus or adjust values.
 * **Center Button (Short Click):** Select an item, confirm an edit, or advance to the next field.
 * **Center Button (Long Hold):** Open the Tool Menu, access Sensor Telemetry, or return to the main screen.
@@ -371,6 +422,7 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 At the very end of the Tube Selection menu, there is a special **"RAW SENSORS"** profile. Selecting this enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.
 
 * **Raw ADC Counts (e.g., `CATH: 5254`):** These are the unconverted digital integer values read directly from the ADS1115 chip. The chip measures the physical voltage and outputs a proportional number ranging from `-32768` to `+32767`.
+
 * **Millivolts (e.g., `41.04mV`):** The system mathematically converts the raw integer count into actual millivolts (`mV`). 
    * For the **Cathode**, this millivolt reading translates directly into Milliamps (mA) due to the 1Ω shunt resistor. 
    * For the **Plate**, this millivolt reading is later multiplied by your calibrated Voltage Scale Factor to calculate the true High Voltage.
@@ -381,11 +433,14 @@ This screen is highly useful for troubleshooting probe connections, checking for
 
 **1. The "Invisible Spaces" in the Profile Editor**
 When creating a new tube profile, the Name field holds exactly **6 characters**. If you type a short name like `6V6` (3 characters), you still have 3 invisible blank spaces remaining. 
+
 * **The Quirk:** The system will not drop down to the "Max Watts" line until you clear all 6 slots.
+
 * **The Solution:** Simply rapid-click the **Center** button 3 times to skip past the invisible empty spaces and move to the next line.
 
 **2. Screen Grid Current (`Src`) is in Permille (/1000)**
 To calculate True Plate Dissipation, the BiasPro subtracts the Screen Grid Current from the Cathode reading. Floating-point decimals (like 5.5%) crash the Arduino's memory limit. Therefore, the firmware uses **Permille (parts-per-thousand)**. 
+
 * To enter a percentage, simply multiply it by 10.
 * **5.5%** = enter `55` /1000
 * **13.0%** = enter `130` /1000
@@ -396,16 +451,23 @@ To calculate True Plate Dissipation, the BiasPro subtracts the Screen Grid Curre
 ## 🧪 Safe Biasing Protocol
 
 1. **Bench Setup:** Connect your amplifier to a speaker load or reactive load box. An Isolation Transformer and a Variac are highly recommended for stable wall-voltage readings.
+
 2. **Probe Connection:** Ensure the amplifier is powered OFF. Remove the power tubes, insert the BiasPro probes into the amp sockets, and place the tubes into the top of the probes.
+
 3. **Select Tube Profile:** Power on the BiasPro. Select the matching tube profile (e.g., `6L6GC`). Press Center to enter **Live Bias Mode**.
+
 4. **Power the Amp:** Turn the amplifier ON. Wait for the tubes to warm up, then disengage standby. 
+
 5. **Adjust Bias:** Watch the **%** and **Watts** readings. Adjust your amplifier's internal bias potentiometer until the hottest tube reaches your desired target:
+
    - **Cool (50% - 60%):** Maximum clean headroom, longest tube life.
    - **Warm (60% - 70%):** The "Golden Zone". Balanced harmonics and warmth.
    - **Hot (70%+):** **DANGER.** High compression, short tube life, risk of red-plating.
 
 ### Hardware Faults & Lockouts
+
 * **HARDWARE FAULT: CHECK I2C:** The ADS1115 ADC has disconnected. The meter will permanently halt to prevent phantom voltage readings. Power cycle to reset.
+
 * **VOLTAGE LOCKOUT:** If the probes detect a voltage spike above your configured safety limit (default 600V), the screen turns red and locks. You must wait for the voltage to drop at least 50V below the limit before the meter releases the lock. Do not attempt to bypass this.
 
 ---
@@ -416,7 +478,9 @@ The **Tube Manager** is powerful because it allows you to customize how the mete
 
 ### 1. Max Dissipation (Watts)
 This determines the "Red Line" for your tube. The meter uses this value to calculate the **% Dissipation** displayed on the screen.
+
 * **How to set:** Look up the "Max Plate Dissipation" in the tube's datasheet.
+
 * **Examples (Typical Values):**
   - **EL34:** 25 Watts
   - **6L6GC:** 30 Watts
@@ -460,7 +524,7 @@ For the highest accuracy, use this method to match the meter readings to a trust
 1. **Safety First:** Refer to your amplifier's schematic to find a safe test point for the B+ Voltage (Plate Voltage) that supplies Pin 3 of the power tubes.
 2. **Connect:** With the amp powered off and drained, connect the Bias Probe to the socket.
 3. **Measure:** Power on the amp. Use your DMM to measure the actual DC Voltage at the safe test point you identified.
-4. **Adjust:** In the Bias Meter "CAL SETUP" menu, select **"Adj Volt Scale A"**.
+4. **Adjust:** In the BiasPro "CAL SETUP" menu, select **"Adj Volt Scale A"**.
 5. **Match:** Use the Left/Right buttons to adjust the scale factor until the **"Live V"** on the screen matches the voltage shown on your DMM.
 6. **Repeat** for Probe B.
 
