@@ -279,6 +279,25 @@ We highly recommend the **Tube Depot Bias Scout Kit** for your hardware. It prov
 
 ---
 
+## 🔌 DIY Probe Construction & Theory
+While we recommend the **Tube Depot Bias Scout Kit** for the easiest assembly, you can build your own probes using the Bias Scout Kit Instructions with standard components.
+
+### 🛠️ DIY Parts List (Per Probe)
+To build one probe, you will need:
+* **1x Octal Tube Base:** (e.g., P-SP8-47X) - The male plug that goes into the amp.
+* **1x Octal PCB Socket:** (e.g., P-ST8-810-PCL) - The female socket the tube plugs into.
+* **1x 1Ω Resistor:** (2 Watt or greater, 1% Tolerance) - *Current Shunt*.
+* **1x 1MΩ Resistor:** (1/2 Watt or greater, 1% Tolerance) - *Voltage Divider High Side*.
+* **1x 100Ω Resistor:** (1/8 Watt or greater, 1% Tolerance) - *Voltage Divider Low Side*.
+* **3-Conductor Cabling:** Shielded audio cable or twisted wire.
+* **Banana Plugs / Jacks:** To connect to the main unit.
+* **Assembly Manual:** [Download PDF Instructions](https://s3.amazonaws.com/tubedepot-com-production/spree/attached_files/td_bias_scout_assy_manual_v3.2.pdf)
+  
+> [!NOTE]
+> The **Hoffman Amps Bias Checker** probe design will **NOT** work with this project. That probe only measures Cathode Current. This project requires probes that measure both Plate Voltage *and* Cathode Current.
+
+---
+
 ## 3D Printed Enclosure
 
 A custom enclosure has been designed to house the Arduino Nano, Display, and Buttons safely.
@@ -472,9 +491,9 @@ To calculate True Plate Dissipation, the BiasPro subtracts the Screen Grid Curre
 
 ---
 
-## Tube Manager Configuration Guide
+## Tube Profile Manager Configuration Guide
 
-The **Tube Manager** is powerful because it allows you to customize how the meter calculates Bias for specific tube types.
+The **Tube Profile Manager** is powerful because it allows you to customize how the meter calculates Bias for specific tube types.
 
 ### 1. Max Dissipation (Watts)
 This determines the "Red Line" for your tube. The meter uses this value to calculate the **% Dissipation** displayed on the screen.
@@ -492,13 +511,14 @@ This determines the "Red Line" for your tube. The meter uses this value to calcu
 * **The Physics:** Standard bias probes measure **Cathode Current**, which is the sum of Plate Current + Screen Current. However, Bias should be calculated using only **Plate Current**.
 * **The Solution:** The "Screen % Factor" subtracts a percentage of the total current to estimate the true Plate Current.
   - `True Plate Current = Measured Current - (Measured Current * ScreenFactor)`
+* **Important (Permille Entry):** To calculate True Plate Dissipation, the BiasPro subtracts the Screen Grid Current from the Cathode reading. Floating-point decimals (like 5.5%) crash the Arduino's memory limit. Therefore, the firmware uses **Permille (parts-per-thousand)**. To enter a percentage, simply multiply it by 10.
 * **Recommended Settings:**
-  - **EL34:** ~13% (0.13) - Pentodes draw more screen current.
-  - **KT88 / 6550:** ~6.0% (0.06) - High power beam tetrodes.
-  - **6L6GC:** ~5.5% (0.055) - Beam Tetrodes draw less.
-  - **EL84:** ~5.0% (0.05) - Miniature pentodes.
-  - **6V6:** ~4.5% (0.045)
-  - **Raw Mode:** Set to 0.00 to see the raw total current without subtraction.
+  - **EL34:** ~13.0% -> Enter **130** (Pentodes draw more screen current).
+  - **KT88 / 6550:** ~6.0% -> Enter **60** (High power beam tetrodes).
+  - **6L6GC:** ~5.5% -> Enter **55** (Beam Tetrodes draw less).
+  - **EL84:** ~5.0% -> Enter **50** (Miniature pentodes).
+  - **6V6:** ~4.5% -> Enter **45**
+  - **Raw Mode:** Set to **0** to see the raw total current without subtraction.
 
 ---
 
@@ -556,22 +576,6 @@ When you are finished calibrating, simply scroll to **"[EXIT]"** (or **"[BACK]"*
 
 ---
 
-## 🔌 DIY Probe Construction & Theory
-While we recommend the **Tube Depot Bias Scout Kit** for the easiest assembly, you can build your own probes using the Bias Scout Kit Instructions with standard components.
-
-### 🛠️ DIY Parts List (Per Probe)
-To build one probe, you will need:
-* **1x Octal Tube Base:** (e.g., P-SP8-47X) - The male plug that goes into the amp.
-* **1x Octal PCB Socket:** (e.g., P-ST8-810-PCL) - The female socket the tube plugs into.
-* **1x 1Ω Resistor:** (2 Watt or greater, 1% Tolerance) - *Current Shunt*.
-* **1x 1MΩ Resistor:** (1/2 Watt or greater, 1% Tolerance) - *Voltage Divider High Side*.
-* **1x 100Ω Resistor:** (1/8 Watt or greater, 1% Tolerance) - *Voltage Divider Low Side*.
-* **3-Conductor Cabling:** Shielded audio cable or twisted wire.
-* **Banana Plugs / Jacks:** To connect to the main unit.
-* **Assembly Manual:** [Download PDF Instructions](https://s3.amazonaws.com/tubedepot-com-production/spree/attached_files/td_bias_scout_assy_manual_v3.2.pdf)
-  
-> [!NOTE]
-> The **Hoffman Amps Bias Checker** probe design will **NOT** work with this project. That probe only measures Cathode Current. This project requires probes that measure both Plate Voltage *and* Cathode Current.
 
 ### 🛡️ DIY Safety Upgrade (Input Protection)
 If you are building this on perfboard (instead of using the custom PCB), we strongly recommend adding input protection to save your Arduino in case of a catastrophic tube failure.
