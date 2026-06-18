@@ -243,7 +243,7 @@ Before sourcing parts, please review these critical hardware constraints to ensu
 
 ### 3. Arduino Nano Bootloader
 
-* **Recommendation:** We recommend buying an Arduino Nano with the modern **Optiboot** bootloader (often found on USB-C versions) to avoid Watchdog Timer boot loops if WDT is enabled.
+* **Recommendation:** We recommend buying an Arduino Nano with the modern **Optiboot** bootloader (often found on USB-C versions) as it provides more flash memory and overall better stability.
 
 ### 4. Power Source (No Heater Power)
 * **Supported:** Isolated USB Wall Charger or 9V Battery.
@@ -438,7 +438,7 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 * **Center Button (Long Hold):** Open the Tool Menu or return to the main screen.
 
 ### RAW SENSORS (Diagnostics Mode)
-At the very end of the Tube Selection menu, there is a special **"RAW SENSORS"** profile. Selecting this enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.
+**"RAW SENSORS (DIAGNOSTIC)"** is a highly visible, dedicated menu item located at the very end of the Tube Profile Selection carousel. It is accessed and exited using a standard short click of the center button. Selecting this profile enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.
 
 * **Raw ADC Counts (e.g., `CATH: 5254`):** These are the unconverted digital integer values read directly from the ADS1115 chip. The chip measures the physical voltage and outputs a proportional number ranging from `-32768` to `+32767`.
 
