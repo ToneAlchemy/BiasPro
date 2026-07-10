@@ -4,7 +4,7 @@ This repository contains the complete, mathematically hardened firmware for a pr
 
 This firmware was completely re-architected from scratch using modern, memory-safe embedded C++ principles to eliminate dynamic memory leaks and ensure rock-solid physical safety lockouts.
 
-> **Current firmware version: v1.1.0.** See [CHANGELOG.md](CHANGELOG.md) for the full change history. Highlights since v1.0.0: a **live plate-voltage readout on the Calibration screen** (match it to your DMM as you adjust), **sensor-glitch rejection** so a noisy ADC read can't false-release the lockout or flash 0 V, **profile-store protection** so a bad edit can't wipe your saved tube profiles, and a **flicker-free VOLTAGE LOCKOUT screen**.
+> **Current firmware version: v1.1.0.** Highlights since v1.0.0: a **live plate-voltage readout on the Calibration screen** (match it to your DMM as you adjust), **sensor-glitch rejection** so a noisy ADC read can't false-release the lockout or flash 0 V, **profile-store protection** so a bad edit can't wipe your saved tube profiles, and a **flicker-free VOLTAGE LOCKOUT screen**.
 
 | **1. Splash Screen** | **2. Tube Select** | **3. Live Bias Mode** |
 | :---: | :---: | :---: |
