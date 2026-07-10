@@ -1,5 +1,5 @@
-/** Arduino Tube Amp BiasPro (v1.0)
- * Copyright (C) 2024-2026 Charlie Isaac (ToneAlchemy.com)
+/** Arduino Tube Amp BiasPro (v1.1.0)
+ * Copyright (C) 2024-2026 - BiasPro by Charlie Isaac (ToneAlchemy.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

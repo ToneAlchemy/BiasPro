@@ -1,5 +1,6 @@
 #include "ProfileEditor.h"
 #include "Config.h"
+#include "StorageCore.h"  // profileLooksValid
 #include <avr/pgmspace.h>
 
 namespace {
@@ -99,7 +100,13 @@ ProfileEditorResult ProfileEditor::handleInput(
           startEdit(profiles[selectedIndex_]);
         }
       } else if (actionIndex_ == 1) {
-        startCreate();
+        // Refuse to enter Create mode when the store is full; the menu footer
+        // already shows "Profiles 10/10". Previously the editor opened anyway
+        // and reported Saved while saveWorkingProfile silently dropped the
+        // new profile.
+        if (profileCount < capacity) {
+          startCreate();
+        }
       } else if (actionIndex_ == 2) {
         if (profileCount > 0) {
           startDelete();
@@ -134,6 +141,15 @@ ProfileEditorResult ProfileEditor::handleInput(
       } else if (editField_ == EditField::ScreenPermille) {
         editField_ = EditField::Save;
       } else {
+        if (!profileLooksValid(working_)) {
+          // Invalid name (e.g. every character blanked): bounce back to the
+          // Name field instead of committing a record that would fail load-time
+          // validation and wipe all custom profiles on the next boot.
+          editField_ = EditField::Label;
+          labelCursor_ = 0;
+          editorValuesPrimed_ = false;
+          return ProfileEditorResult::None;
+        }
         saveWorkingProfile(profiles, profileCount, capacity);
         close();
         return ProfileEditorResult::Saved;
@@ -267,6 +283,12 @@ void ProfileEditor::saveWorkingProfile(
   uint8_t capacity
 ) {
   if (profiles == nullptr || capacity == 0) {
+    return;
+  }
+
+  // Insurance: never let an invalid working profile reach the stored array,
+  // even if a future caller bypasses the editor's bounce-to-Name gate.
+  if (!profileLooksValid(working_)) {
     return;
   }
 

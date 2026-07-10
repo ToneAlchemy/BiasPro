@@ -419,6 +419,13 @@ void DisplayManager::drawCalibration(const CalibrationSettings &settings,
   tft_.setCursor(6, 116);
   tft_.print(F("< > adjust  C next"));
 
+  // x=16 matches where the field rows' label text begins: they print a cursor
+  // marker char at x=10, so their text starts one glyph (6 px) further right.
+  tft_.setTextColor(ST7735_GREEN, ST7735_BLACK);
+  tft_.setCursor(16, 104);
+  tft_.print(F("Live"));
+  calLiveVoltsPrimed_ = false;
+
   calibrationValuesPrimed_ = false;
   drawCalibrationRow(0, selectedField == 0, settings.voltageScaleA_centi);
   drawCalibrationRow(1, selectedField == 1, settings.voltageScaleB_centi);
@@ -494,8 +501,25 @@ void DisplayManager::drawCalibrationRow(uint8_t fieldIndex, bool selected,
   }
 }
 
-void DisplayManager::drawVoltageLockout(float voltsA, float voltsB,
-                                        uint16_t limit) {
+void DisplayManager::updateCalibrationLiveVoltage(float volts) {
+  const int16_t whole = static_cast<int16_t>(volts + 0.5f);
+  if (calLiveVoltsPrimed_ && whole == calLiveVolts_) {
+    return;
+  }
+
+  calLiveVolts_ = whole;
+  calLiveVoltsPrimed_ = true;
+
+  // Incremental, flicker-free: black text background overwrites the prior
+  // glyphs and the trailing spaces cover a shrinking digit count. No fillRect.
+  tft_.setTextSize(1);
+  tft_.setTextColor(ST7735_GREEN, ST7735_BLACK);
+  tft_.setCursor(46, 104);
+  tft_.print(whole);
+  tft_.print(F("V   "));
+}
+
+void DisplayManager::drawVoltageLockoutFrame(uint16_t limit) {
   tft_.fillScreen(ST7735_RED);
 
   tft_.setTextSize(2);
@@ -508,14 +532,10 @@ void DisplayManager::drawVoltageLockout(float voltsA, float voltsB,
 
   tft_.setTextSize(1);
   tft_.setCursor(18, 68);
-  tft_.print(F("A "));
-  printFixedTenth(tft_, roundedTenth(voltsA));
-  tft_.print(F("V"));
+  tft_.print(F("A"));
 
   tft_.setCursor(88, 68);
-  tft_.print(F("B "));
-  printFixedTenth(tft_, roundedTenth(voltsB));
-  tft_.print(F("V"));
+  tft_.print(F("B"));
 
   tft_.setCursor(20, 90);
   tft_.print(F("Limit "));
@@ -524,6 +544,28 @@ void DisplayManager::drawVoltageLockout(float voltsA, float voltsB,
 
   tft_.setCursor(16, 110);
   tft_.print(F("Wait safe band"));
+
+  lockoutValuesPrimed_ = false;
+}
+
+void DisplayManager::updateVoltageLockoutValues(float voltsA, float voltsB) {
+  tft_.setTextSize(1);
+  tft_.setTextColor(ST7735_WHITE, ST7735_RED);
+  drawLockoutTenth(roundedTenth(voltsA), lockoutVoltsA10_, 30, 68);
+  drawLockoutTenth(roundedTenth(voltsB), lockoutVoltsB10_, 100, 68);
+  lockoutValuesPrimed_ = true;
+}
+
+void DisplayManager::drawLockoutTenth(int16_t value, int16_t &previous,
+                                      int16_t x, int16_t y) {
+  if (lockoutValuesPrimed_ && value == previous) {
+    return;
+  }
+
+  previous = value;
+  tft_.setCursor(x, y);
+  printFixedTenth(tft_, value);
+  tft_.print(F("V  "));
 }
 
 void DisplayManager::drawHardwareFault() {
@@ -531,8 +573,10 @@ void DisplayManager::drawHardwareFault() {
 
   tft_.setTextSize(2);
   tft_.setTextColor(ST7735_RED, ST7735_BLACK);
-  tft_.setCursor(0, 30);
-  tft_.print(F("HARDWARE FAULT"));
+  // "HW FAULT" is 8 chars x 12 px = 96 px; x=32 centers it on the 160 px row.
+  // The previous "HARDWARE FAULT" was 168 px and wrapped its final glyph.
+  tft_.setCursor(32, 30);
+  tft_.print(F("HW FAULT"));
 
   tft_.setTextSize(1);
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);

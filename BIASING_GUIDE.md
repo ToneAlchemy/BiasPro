@@ -56,8 +56,8 @@ Since the bias rises when switching to Tube Mode, you should **not** bias the SS
     * **Find a Safe Test Point:** Use the amp's schematic to find the safest B+ voltage point that powers the tubes (e.g., the Standby Switch or the main B+ fuse).
     * **WARNING:** Avoid probing Pin 3 directly at the tube socket. A slip of the probe can short Pin 3 to Pin 2 (Heater) or Pin 4 (Screen), causing catastrophic damage. Always use a safer upstream point for measurement.
     * Measure this voltage with a trusted DMM.
-    * Enter **CAL SETUP** on the Bias Meter.
-    * Adjust `Volt Scale` until the Bias Meter matches your DMM (e.g., 465V).
+    * Enter **Calibration Mode** on the BiasPro (hold the Center button from the main screen to enter the Profiles screen, then hold Center again).
+    * Adjust `Volt Scale` until the BiasPro's "Live V" readout matches your DMM (e.g., 465V).
 4.  **Set Bias:**
     * Watch the **Watts** reading on the Bias Meter.
     * Adjust the bias pot on the amp until the meter reads approximately **19 Watts** (63%).

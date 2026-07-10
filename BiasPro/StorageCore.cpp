@@ -1,0 +1,199 @@
+#include "StorageCore.h"
+#include "Config.h"
+
+namespace {
+  uint8_t foldByte(uint8_t sum, uint8_t value) {
+    return static_cast<uint8_t>(sum + value);
+  }
+
+  uint8_t foldUInt16(uint8_t sum, uint16_t value) {
+    sum = foldByte(sum, static_cast<uint8_t>(value & 0xFF));
+    sum = foldByte(sum, static_cast<uint8_t>((value >> 8) & 0xFF));
+    return sum;
+  }
+}
+
+uint8_t checksumProfiles(const TubeProfile* profiles, uint8_t count) {
+  uint8_t sum = count;
+
+  for (uint8_t index = 0; index < count; ++index) {
+    for (uint8_t charIndex = 0; charIndex < DeviceConfig::TubeNameLength; ++charIndex) {
+      sum = foldByte(sum, static_cast<uint8_t>(profiles[index].label[charIndex]));
+    }
+
+    sum = foldByte(sum, profiles[index].maxDissipationWatts);
+    sum = foldUInt16(sum, profiles[index].screenCurrentPermille);
+  }
+
+  return sum;
+}
+
+void copyLabel(char* target, const char* source) {
+  uint8_t index = 0;
+
+  for (; index < DeviceConfig::TubeNameLength - 1 && source[index] != '\0'; ++index) {
+    target[index] = source[index];
+  }
+
+  for (; index < DeviceConfig::TubeNameLength; ++index) {
+    target[index] = '\0';
+  }
+}
+
+CalibrationSettings defaultCalibration() {
+  CalibrationSettings settings;
+  settings.signature = DeviceConfig::EepromSignature;
+  settings.voltageScaleA_centi = 1000;
+  settings.voltageScaleB_centi = 1000;
+  settings.shuntA_milliohm = 1000;
+  settings.shuntB_milliohm = 1000;
+  settings.voltageLimit = 600;
+  settings.checksum = 0;
+  return settings;
+}
+
+uint8_t defaultProfiles(TubeProfile* profiles, uint8_t capacity) {
+  if (capacity < 6) {
+    return 0;
+  }
+
+  copyLabel(profiles[0].label, "6L6GC");
+  profiles[0].maxDissipationWatts = 30;
+  profiles[0].screenCurrentPermille = 55;
+
+  copyLabel(profiles[1].label, "EL34");
+  profiles[1].maxDissipationWatts = 25;
+  profiles[1].screenCurrentPermille = 130;
+
+  copyLabel(profiles[2].label, "6V6");
+  profiles[2].maxDissipationWatts = 14;
+  profiles[2].screenCurrentPermille = 45;
+
+  copyLabel(profiles[3].label, "EL84");
+  profiles[3].maxDissipationWatts = 12;
+  profiles[3].screenCurrentPermille = 50;
+
+  copyLabel(profiles[4].label, "KT88");
+  profiles[4].maxDissipationWatts = 42;
+  profiles[4].screenCurrentPermille = 60;
+
+  copyLabel(profiles[5].label, "6550");
+  profiles[5].maxDissipationWatts = 42;
+  profiles[5].screenCurrentPermille = 60;
+
+  for (uint8_t index = 6; index < capacity; ++index) {
+    copyLabel(profiles[index].label, "");
+    profiles[index].maxDissipationWatts = 0;
+    profiles[index].screenCurrentPermille = 0;
+  }
+
+  return 6;
+}
+
+bool profileLooksValid(const TubeProfile& profile) {
+  bool hasVisibleName = false;
+
+  for (uint8_t index = 0; index < DeviceConfig::TubeNameLength; ++index) {
+    const char c = profile.label[index];
+
+    if (c == '\0') {
+      break;
+    }
+
+    if (!((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == ' ')) {
+      return false;
+    }
+
+    if (c != ' ') {
+      hasVisibleName = true;
+    }
+  }
+
+  if (!hasVisibleName) {
+    return false;
+  }
+
+  if (profile.maxDissipationWatts < 1 || profile.maxDissipationWatts > 99) {
+    return false;
+  }
+
+  if (profile.screenCurrentPermille > 300) {
+    return false;
+  }
+
+  return true;
+}
+
+uint8_t checksumCalibration(const CalibrationSettings& settings) {
+  uint8_t sum = 0;
+  sum = foldUInt16(sum, settings.signature);
+  sum = foldUInt16(sum, settings.voltageScaleA_centi);
+  sum = foldUInt16(sum, settings.voltageScaleB_centi);
+  sum = foldUInt16(sum, settings.shuntA_milliohm);
+  sum = foldUInt16(sum, settings.shuntB_milliohm);
+  sum = foldUInt16(sum, settings.voltageLimit);
+  return sum;
+}
+
+bool calibrationIsValid(const CalibrationSettings& settings) {
+  if (settings.signature != DeviceConfig::EepromSignature) return false;
+  if (settings.checksum != checksumCalibration(settings)) return false;
+  if (settings.voltageScaleA_centi < 500 || settings.voltageScaleA_centi > 2000) return false;
+  if (settings.voltageScaleB_centi < 500 || settings.voltageScaleB_centi > 2000) return false;
+  if (settings.shuntA_milliohm < 500 || settings.shuntA_milliohm > 5000) return false;
+  if (settings.shuntB_milliohm < 500 || settings.shuntB_milliohm > 5000) return false;
+  if (settings.voltageLimit < 300 || settings.voltageLimit > 800) return false;
+  return true;
+}
+
+void clampCalibration(CalibrationSettings& settings) {
+  settings.signature = DeviceConfig::EepromSignature;
+
+  if (settings.voltageScaleA_centi < 500) settings.voltageScaleA_centi = 500;
+  if (settings.voltageScaleA_centi > 2000) settings.voltageScaleA_centi = 2000;
+  if (settings.voltageScaleB_centi < 500) settings.voltageScaleB_centi = 500;
+  if (settings.voltageScaleB_centi > 2000) settings.voltageScaleB_centi = 2000;
+  if (settings.shuntA_milliohm < 500) settings.shuntA_milliohm = 500;
+  if (settings.shuntA_milliohm > 5000) settings.shuntA_milliohm = 5000;
+  if (settings.shuntB_milliohm < 500) settings.shuntB_milliohm = 500;
+  if (settings.shuntB_milliohm > 5000) settings.shuntB_milliohm = 5000;
+  if (settings.voltageLimit < 300) settings.voltageLimit = 300;
+  if (settings.voltageLimit > 800) settings.voltageLimit = 800;
+
+  settings.checksum = checksumCalibration(settings);
+}
+
+uint8_t recoverProfiles(TubeProfile* profiles, uint8_t storedCount,
+                        uint8_t storedChecksum, uint8_t capacity,
+                        bool* usedDefaults) {
+  bool defaulted = true;
+  uint8_t result = 0;
+
+  if (profiles == nullptr || capacity == 0) {
+    defaulted = false;
+  } else if (storedCount == 0 || storedCount > DeviceConfig::MaxTubeProfiles ||
+             storedCount > capacity) {
+    result = defaultProfiles(profiles, capacity);
+  } else {
+    bool allValid = true;
+    for (uint8_t index = 0; index < storedCount; ++index) {
+      if (!profileLooksValid(profiles[index])) {
+        allValid = false;
+        break;
+      }
+    }
+
+    if (allValid && storedChecksum == checksumProfiles(profiles, storedCount)) {
+      result = storedCount;
+      defaulted = false;
+    } else {
+      result = defaultProfiles(profiles, capacity);
+    }
+  }
+
+  if (usedDefaults != nullptr) {
+    *usedDefaults = defaulted;
+  }
+
+  return result;
+}

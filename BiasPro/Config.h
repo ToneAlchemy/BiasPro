@@ -1,7 +1,14 @@
 #pragma once
 
-
+// Arduino provides the fixed-width integer types via <Arduino.h> on the target;
+// on a host build (e.g. the calculation tests) fall back to <cstdint> so this
+// header - and everything that only needs the device constants/types - can be
+// compiled without the Arduino toolchain.
+#if defined(ARDUINO)
 #include <Arduino.h>
+#else
+#include <stdint.h>  // host builds: fixed-width types in the global namespace
+#endif
 
 namespace DeviceConfig {
 constexpr uint8_t TftSclkPin = 13;

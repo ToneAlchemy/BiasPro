@@ -28,4 +28,5 @@ private:
   uint32_t lastRefreshMillis_ = 0;
   bool screenNeedsPaint_ = true;
   bool hardwareReady_ = false;
+  bool calibrationDirty_ = false;
 };

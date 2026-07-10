@@ -104,32 +104,41 @@ RawAdcFrame HardwareIO::readAdcFrame(uint8_t samples) {
   int32_t plateATotal = 0;
   int32_t cathodeBTotal = 0;
   int32_t plateBTotal = 0;
+  bool frameValid = true;
 
   for (uint8_t index = 0; index < samples; ++index) {
     for (uint16_t i = 0; i < 4; ++i) {
-      uint16_t config = 0x8000 | ((4 + i) << 12) | 0x0A00 | 0x0100 | 0x00E3; 
-      
+      uint16_t config = 0x8000 | ((4 + i) << 12) | 0x0A00 | 0x0100 | 0x00E3;
+
       Wire.beginTransmission(DeviceConfig::AdsAddress);
       Wire.write(0x01);
       Wire.write((uint8_t)(config >> 8));
       Wire.write((uint8_t)(config & 0xFF));
-      Wire.endTransmission();
-      
+      if (Wire.endTransmission() != 0) {
+        frameValid = false;
+      }
+
       delay(2);
 
       ButtonEvent e = readButtonEvent();
       if (e != ButtonEvent::None && pendingEvent_ == ButtonEvent::None) {
         pendingEvent_ = e;
       }
-      
+
       Wire.beginTransmission(DeviceConfig::AdsAddress);
       Wire.write(0x00);
-      Wire.endTransmission();
+      if (Wire.endTransmission() != 0) {
+        frameValid = false;
+      }
       Wire.requestFrom((uint8_t)DeviceConfig::AdsAddress, (uint8_t)2);
-      
+
       int16_t val = 0;
       if (Wire.available() == 2) {
-          val = (Wire.read() << 8) | Wire.read();
+          const uint8_t hi = Wire.read();
+          const uint8_t lo = Wire.read();
+          val = static_cast<int16_t>((static_cast<uint16_t>(hi) << 8) | lo);
+      } else {
+          frameValid = false;
       }
 
       if (i == 0) cathodeATotal += val;
@@ -144,6 +153,7 @@ RawAdcFrame HardwareIO::readAdcFrame(uint8_t samples) {
   frame.plateA = static_cast<int16_t>(plateATotal / samples);
   frame.cathodeB = static_cast<int16_t>(cathodeBTotal / samples);
   frame.plateB = static_cast<int16_t>(plateBTotal / samples);
+  frame.valid = frameValid;
   return frame;
 }
 

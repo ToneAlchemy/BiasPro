@@ -1,7 +1,9 @@
 #pragma once
 
+#if defined(ARDUINO)
 #include <Arduino.h>
-#include "Config.h"
+#endif
+#include "Config.h"  // pulls in <cstdint> on host builds
 
 enum class ButtonEvent : uint8_t {
   None,
@@ -48,6 +50,7 @@ struct RawAdcFrame {
   int16_t plateA;
   int16_t cathodeB;
   int16_t plateB;
+  bool valid;  // false if any I2C transaction in the frame failed
 };
 
 struct SensorTelemetryFrame {

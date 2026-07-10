@@ -90,6 +90,7 @@ void ApplicationController::tick() {
     if (digitalRead(DeviceConfig::ButtonLeftPin) == LOW) {
       activeScreen_ = ScreenId::Calibration;
       calibrationField_ = 0;
+      calibrationDirty_ = false;
       return;
     }
   }
@@ -160,21 +161,28 @@ void ApplicationController::tick() {
       }
 
       RawAdcFrame raw = hardware_.readAdcFrame(DeviceConfig::SampleWindow);
-      BiasReading reading = MathCalculations::computeBias(
-        raw,
-        calibration_,
-        profiles_[selectedProfile_]
-      );
 
-      if (protection_.shouldEnterLockout(reading, calibration_)) {
-        activeScreen_ = ScreenId::FaultLockout;
-        display_.drawVoltageLockout(reading.voltsA, reading.voltsB, calibration_.voltageLimit);
-        lastRefreshMillis_ = now;
-        screenNeedsPaint_ = false;
-        return;
+      if (raw.valid) {
+        BiasReading reading = MathCalculations::computeBias(
+          raw,
+          calibration_,
+          profiles_[selectedProfile_]
+        );
+
+        if (protection_.shouldEnterLockout(reading, calibration_)) {
+          activeScreen_ = ScreenId::FaultLockout;
+          display_.drawVoltageLockoutFrame(calibration_.voltageLimit);
+          display_.updateVoltageLockoutValues(reading.voltsA, reading.voltsB);
+          lastRefreshMillis_ = now;
+          screenNeedsPaint_ = false;
+          return;
+        }
+
+        display_.updateLiveBiasValues(reading);
       }
+      // Invalid frame (I2C fault): freeze the last good values rather than
+      // rendering a misleading 0.0 V / 0 mA reading.
 
-      display_.updateLiveBiasValues(reading);
       lastRefreshMillis_ = now;
       screenNeedsPaint_ = false;
     }
@@ -191,23 +199,34 @@ void ApplicationController::tick() {
     }
 
     if (now - lastRefreshMillis_ >= LiveRefreshMillis && profileCount_ > 0) {
-      RawAdcFrame raw = hardware_.readAdcFrame(DeviceConfig::SampleWindow);
-      BiasReading reading = MathCalculations::computeBias(
-        raw,
-        calibration_,
-        profiles_[selectedProfile_]
-      );
-
-      if (protection_.canExitLockout(reading, calibration_)) {
-        activeScreen_ = ScreenId::LiveBias;
-        screenNeedsPaint_ = true;
-      } else {
-        display_.drawVoltageLockout(reading.voltsA, reading.voltsB, calibration_.voltageLimit);
+      if (screenNeedsPaint_) {
+        display_.drawVoltageLockoutFrame(calibration_.voltageLimit);
+        screenNeedsPaint_ = false;
       }
+
+      RawAdcFrame raw = hardware_.readAdcFrame(DeviceConfig::SampleWindow);
+
+      if (raw.valid) {
+        BiasReading reading = MathCalculations::computeBias(
+          raw,
+          calibration_,
+          profiles_[selectedProfile_]
+        );
+
+        if (protection_.canExitLockout(reading, calibration_)) {
+          activeScreen_ = ScreenId::LiveBias;
+          screenNeedsPaint_ = true;
+        } else {
+          display_.updateVoltageLockoutValues(reading.voltsA, reading.voltsB);
+        }
+      }
+      // Invalid frame: never release the lockout on an unreadable ADC (a failed
+      // read defaults to 0 counts, which would look "safe"). Hold the screen.
 
       lastRefreshMillis_ = now;
     } else if (screenNeedsPaint_) {
-      display_.drawVoltageLockout(0.0f, 0.0f, calibration_.voltageLimit);
+      display_.drawVoltageLockoutFrame(calibration_.voltageLimit);
+      display_.updateVoltageLockoutValues(0.0f, 0.0f);
       screenNeedsPaint_ = false;
     }
 
@@ -265,6 +284,7 @@ void ApplicationController::tick() {
     } else if (event == ButtonEvent::LongCenter) {
       activeScreen_ = ScreenId::Calibration;
       calibrationField_ = 0;
+      calibrationDirty_ = false;
       screenNeedsPaint_ = true;
       return;
     }
@@ -313,7 +333,7 @@ void ApplicationController::tick() {
   if (activeScreen_ == ScreenId::Calibration) {
     if (event == ButtonEvent::Left || event == ButtonEvent::Right) {
       adjustCalibration(calibration_, calibrationField_, event);
-      storage_.saveCalibration(calibration_);
+      calibrationDirty_ = true;
       if (screenNeedsPaint_) {
         display_.drawCalibration(calibration_, calibrationField_);
         screenNeedsPaint_ = false;
@@ -321,6 +341,13 @@ void ApplicationController::tick() {
         display_.updateCalibrationValues(calibration_, calibrationField_);
       }
     } else if (event == ButtonEvent::Center) {
+      // Persist pending edits when leaving a field. Placed before the wrap
+      // check so both advancing to the next field AND the wrap-past-Limit exit
+      // below flush the current field; deferring the write must never drop it.
+      if (calibrationDirty_) {
+        storage_.saveCalibration(calibration_);
+        calibrationDirty_ = false;
+      }
       calibrationField_ = calibrationField_ + 1;
       if (calibrationField_ > 4) {
         calibrationField_ = 0;
@@ -330,7 +357,10 @@ void ApplicationController::tick() {
       }
       display_.updateCalibrationValues(calibration_, calibrationField_);
     } else if (event == ButtonEvent::LongCenter) {
-      storage_.saveCalibration(calibration_);
+      if (calibrationDirty_) {
+        storage_.saveCalibration(calibration_);
+        calibrationDirty_ = false;
+      }
       activeScreen_ = ScreenId::TubeSelect;
       screenNeedsPaint_ = true;
       return;
@@ -339,6 +369,28 @@ void ApplicationController::tick() {
     if (screenNeedsPaint_) {
       display_.drawCalibration(calibration_, calibrationField_);
       screenNeedsPaint_ = false;
+      lastRefreshMillis_ = now;
+    }
+
+    // Non-blocking live-voltage readout (~350 ms cadence, like RAW SENSORS) so
+    // the technician sees the immediate result of the scale factor being tuned.
+    // Plate voltage depends only on the plate reading and the active probe's
+    // scale; the shunt fields show that same probe's voltage.
+    if (now - lastRefreshMillis_ >= TelemetryRefreshMillis) {
+      const RawAdcFrame raw = hardware_.readAdcFrame(DeviceConfig::SampleWindow);
+      if (raw.valid) {
+        const bool probeB = (calibrationField_ == 1 || calibrationField_ == 3);
+        const int16_t plate = probeB ? raw.plateB : raw.plateA;
+        const uint16_t scaleCenti = probeB ? calibration_.voltageScaleB_centi
+                                           : calibration_.voltageScaleA_centi;
+        float volts = MathCalculations::adcCountToMillivolts(plate) *
+                      (static_cast<float>(scaleCenti) / 100.0f);
+        if (volts < 0.0f) {
+          volts = 0.0f;
+        }
+        display_.updateCalibrationLiveVoltage(volts);
+      }
+      lastRefreshMillis_ = now;
     }
   }
 }

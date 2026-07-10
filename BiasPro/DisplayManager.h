@@ -21,7 +21,9 @@ public:
   void updateProfileManagerSelection(const TubeProfile* profiles, uint8_t count, uint8_t selectedIndex);
   void drawCalibration(const CalibrationSettings& settings, uint8_t selectedField);
   void updateCalibrationValues(const CalibrationSettings& settings, uint8_t selectedField);
-  void drawVoltageLockout(float voltsA, float voltsB, uint16_t limit);
+  void updateCalibrationLiveVoltage(float volts);
+  void drawVoltageLockoutFrame(uint16_t limit);
+  void updateVoltageLockoutValues(float voltsA, float voltsB);
   void drawHardwareFault();
 
 private:
@@ -38,8 +40,14 @@ private:
   int16_t liveDelta10_ = 0;
   bool calibrationValuesPrimed_ = false;
   uint8_t calibrationSelected_ = 255;
+  bool calLiveVoltsPrimed_ = false;
+  int16_t calLiveVolts_ = 0;
+  bool lockoutValuesPrimed_ = false;
+  int16_t lockoutVoltsA10_ = 0;
+  int16_t lockoutVoltsB10_ = 0;
 
   void drawLiveTenth(int16_t value, int16_t& previous, int16_t x, int16_t y, uint16_t color);
   void drawLiveWhole(int16_t value, int16_t& previous, int16_t x, int16_t y, uint16_t color);
   void drawCalibrationRow(uint8_t fieldIndex, bool selected, uint16_t value);
+  void drawLockoutTenth(int16_t value, int16_t& previous, int16_t x, int16_t y);
 };

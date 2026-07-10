@@ -90,19 +90,19 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 
 ### 1. Pinned Dependencies
 To guarantee a successful compile, you **must** use these exact library versions in the Arduino IDE:
-* `Adafruit GFX Library` v1.12.6
+* `Adafruit GFX Library` v1.12.5
 * `Adafruit ST7735 and ST7789 Library` v1.11.0
 * `Adafruit BusIO` v1.17.4
 
-### 2. CRITICAL: 97% Flash Memory Limit & Bootloaders
-The firmware compiles to approximately **29,824 bytes** of program storage. This is a very tight fit on older hardware, but it will successfully flash to both new and old Arduino Nanos.
+### 2. CRITICAL: 98% Flash Memory Limit & Bootloaders
+The firmware compiles to approximately **30,382 bytes** of program storage. This is a very tight fit on older hardware, but it will successfully flash to both new and old Arduino Nanos.
 
-* **Newer Arduino Nano (Standard Bootloader):** If you have a newer official Nano or a high-quality modern clone, use the `Processor: ATmega328P` setting in the Arduino IDE. These boards use the modern *Optiboot* bootloader, which leaves 32,256 bytes of usable flash space. The firmware will fit easily with roughly **2.4KB to spare**.
+* **Newer Arduino Nano (Standard Bootloader):** If you have a newer official Nano or a high-quality modern clone, use the `Processor: ATmega328P` setting in the Arduino IDE. These boards use the modern *Optiboot* bootloader, which leaves 32,256 bytes of usable flash space. The firmware will fit easily with roughly **1.8KB to spare**.
 
-* **Older Arduino Nano & Generic Clones (Old Bootloader):** Many cheaper clones and older Nanos use the legacy bootloader, which takes up more space and leaves exactly 30,720 bytes of usable flash space. The firmware **will still successfully flash** using the `Processor: ATmega328P (Old Bootloader)` setting, fitting with roughly **896 bytes to spare**:
+* **Older Arduino Nano & Generic Clones (Old Bootloader):** Many cheaper clones and older Nanos use the legacy bootloader, which takes up more space and leaves exactly 30,720 bytes of usable flash space. The firmware **will still successfully flash** using the `Processor: ATmega328P (Old Bootloader)` setting, fitting with roughly **338 bytes to spare**:
   ```text
-  Sketch uses 29824 bytes (97%) of program storage space. Maximum is 30720 bytes.
-  Global variables use 740 bytes (36%) of dynamic memory, leaving 1308 bytes for local variables. Maximum is 2048 bytes.
+  Sketch uses 30382 bytes (98%) of program storage space. Maximum is 30720 bytes.
+  Global variables use 749 bytes (36%) of dynamic memory, leaving 1299 bytes for local variables. Maximum is 2048 bytes.
   ```
   It works perfectly, but you have very little room to add additional features or text without overflowing the memory.
 
@@ -157,26 +157,60 @@ This project is written as a standard Arduino sketch (`.ino`) and was developed 
 
 ---
 
+## 🧪 Tests
+
+The pure calculation and storage logic (bias math, probe classification, EEPROM
+checksums/validation, and the over-voltage protection state machine) lives in
+Arduino-independent units (`MathCalculations`, `ProtectionSystem`, `StorageCore`)
+so it can be verified on a PC with any C++17 compiler — no board required. The
+host tests link the **actual firmware sources**, not a copy, so they cannot drift
+from what ships.
+
+```bash
+# From the repository root, with g++ (or clang++):
+g++ -std=c++17 -I BiasPro test/host_calculation_tests.cpp \
+    BiasPro/MathCalculations.cpp BiasPro/ProtectionSystem.cpp \
+    BiasPro/StorageCore.cpp -o biaspro_host_tests
+./biaspro_host_tests        # expect: "host calculation tests passed"
+```
+
+A second, source-level UI regression check (PowerShell) asserts that the display
+code keeps using its incremental-redraw pattern and that the safety-screen
+routing stays intact:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File test/screen_redraw_static_check.ps1
+```
+
+---
+
 ## Features
 
 BiasPro introduces professional-grade data integrity and safety features not found in standard DIY alternatives.
 
 ### 🛠 Core Functionality
 * **Dual Probe Measurement:** Simultaneous real-time monitoring of Tube A and Tube B.
+
 * **True Plate Dissipation:** Calculates power (Watts) and dissipation percentage based on the specific tube type.
+
 * **Screen Current Correction:** Implements industry-standard math to subtract estimated screen current, ensuring the displayed bias represents true *Plate* dissipation, not just Cathode current.
 
 ### 💾 Robust Data Integrity
 * **Checksum Protection:** The EEPROM data includes a computed checksum. If the memory is corrupted or a new chip is installed, the system detects the error and automatically restores safe default values, preventing dangerous behavior.
+
 * **Safety Clamps:** The Calibration Menu now prevents users from accidentally setting dangerous values (e.g., setting a shunt resistor to 0.0Ω or a voltage scaler to 0), effectively "clamping" entries to safe, realistic ranges.
 
 ### 🛡️ Safety & Reliability
-* **Active Over-Voltage Monitor:** Continuous safety checks will lock the interface and display a "DANGER" warning if probe voltage exceeds limits.
+* **Active Over-Voltage Monitor:** While in **Live Bias mode**, the plate voltage is checked on every measurement cycle; if it exceeds the configured limit the interface locks and displays a red "LOCKOUT" warning until the voltage falls back into the safe band. (The lock, once tripped, persists across screens until released.) **This automatic check runs only in Live Bias mode — it is _not_ active on the Calibration screen**, even though that screen shows a live voltage. During calibration, rely on your DMM and your own judgement (see the Calibration Guide warning below).
+
 * **Safety Hysteresis:** The system requires a voltage drop of 50V (hysteresis) before resetting the safety lock, preventing rapid toggling near the limit.
+
 * **Input Debouncing:** Advanced state-machine logic eliminates switch "recoil" and bounce, ensuring the cursor never jumps unintentionally.
 
 ### ⚙️ On-Board Calibration
 * **Software Calibration:** Shunt resistance and Voltage Divider scaling can be adjusted via the screen menu and saved to EEPROM. You do not need to edit the source code to calibrate the unit.
+
+* **Live Voltage Feedback:** While adjusting the Scale or Shunt fields in Calibration mode, the screen displays a live, non-blocking computed plate voltage (refreshed every ~350 ms) for the active probe. This allows you to match the calibration to your DMM readings in real time.
 
 ---
 
@@ -185,10 +219,10 @@ BiasPro introduces professional-grade data integrity and safety features not fou
 For those interested in the engineering, here is how the BiasPro safely measures high-voltage tube amplifiers.
 
 ### 1. Measuring Plate Voltage (The Voltage Divider)
-The Arduino cannot measure 500V directly.
-* **The Circuit:** Inside the probe, a **Voltage Divider** network scales the high voltage down to a safe range (0-5V).
-* **The Math:** The device measures this low "safe" voltage and multiplies it by the **Voltage Scale Factor** (calibrated in software) to calculate the true High Voltage.
-    * *Example:* 450V from the amp is stepped down to 4.5V for the ADC. The screen displays "450V".
+The Arduino cannot measure 500V directly, and the ADS1115 is configured with a high-resolution Programmable Gain Amplifier (PGA) range of ±0.256V (256 mV) to maximize measurement accuracy.
+* **The Circuit:** Inside the probe, a **Voltage Divider** network (1MΩ high-side, 100Ω low-side) scales the high voltage down to a safe millivolt range (0-256 mV).
+* **The Math:** The device measures this low millivolt reading and multiplies it by the **Voltage Scale Factor** (defaults to 10.00, calibrated in software) to calculate the true High Voltage.
+    * *Example:* 450V from the amp is stepped down by the 10,001:1 divider to approximately 45mV (0.045V) at the ADC input. The firmware multiplies this 45mV reading by the Scale Factor (10.00) to display "450V" on the screen.
 
 ### 2. Measuring Bias Current (The Shunt Resistor)
 To measure current, we use **Ohm's Law** (`V = I × R`).
@@ -527,8 +561,14 @@ This determines the "Red Line" for your tube. The meter uses this value to calcu
 The meter comes with **Default** calibration settings (Automatic), but for professional accuracy, we strongly recommend **Manual** calibration.
 
 **How to Enter Calibration Mode:**
-1. **From Menu:** Scroll to the end of the menu and select **"CAL SETUP"**.
+1. **From Profiles Manager:** While on the **Profiles** manager screen (accessible by holding the Center button from the main Tube Selection screen), press and hold the **Center Button** to enter Calibration Mode.
 2. **Startup Shortcut:** Press and hold the **Left Button** immediately when powering on (during the splash screen) to jump straight into Calibration Mode.
+
+### Calibration Field Ranges & Adjustments
+To prevent entering invalid or dangerous values, the firmware enforces strict calibration bounds and adjustment steps:
+* **Voltage Scale (Adj Volt Scale A / B):** Range is `5.00` to `20.00` (adjusted in steps of `0.05` via Left/Right).
+* **Shunt Resistor (Adj Shunt Res A / B):** Range is `0.50`Ω to `5.00`Ω (adjusted in steps of `0.01`Ω, displayed in ohms, stored internally in milliohms).
+* **Voltage Limit (Adj Voltage Limit):** Range is `300V` to `800V` (adjusted in steps of `5V`).
 
 ### Method 1: Default Calibration (Automatic)
 When you first power on the device (or after a reset), it loads standard default values:
@@ -544,9 +584,12 @@ For the highest accuracy, use this method to match the meter readings to a trust
 1. **Safety First:** Refer to your amplifier's schematic to find a safe test point for the B+ Voltage (Plate Voltage) that supplies Pin 3 of the power tubes.
 2. **Connect:** With the amp powered off and drained, connect the Bias Probe to the socket.
 3. **Measure:** Power on the amp. Use your DMM to measure the actual DC Voltage at the safe test point you identified.
-4. **Adjust:** In the BiasPro "CAL SETUP" menu, select **"Adj Volt Scale A"**.
+4. **Adjust:** In the Calibration screen, select **"Adj Volt Scale A"**.
 5. **Match:** Use the Left/Right buttons to adjust the scale factor until the **"Live V"** on the screen matches the voltage shown on your DMM.
 6. **Repeat** for Probe B.
+
+> [!WARNING]
+> **The over-voltage LOCKOUT alarm does _not_ run on the Calibration screen.** The automatic red-screen lockout is active **only in Live Bias mode**. During voltage-scale calibration the amp is energised and this screen shows a live "Live V" reading, but it will **not** trip the lockout if the amp faults high. Treat "Live V" as a readout only — **not** a safety alarm. Watch your DMM, keep the plate voltage within your amp's expected range, and if anything looks wrong, shut down at the amp. Once calibrated, do your actual biasing from **Live Bias mode**, where the lockout is active.
 
 #### B. Calibrating Shunt Resistors (Bias Scout Probes)
 If you are using commercial probes like the **Tube Depot Bias Scout**, they typically have three banana plugs: Red, Black, and White.
@@ -563,7 +606,7 @@ If you are using commercial probes like the **Tube Depot Bias Scout**, they typi
 5. **Calculate Actual Value:** Subtract the Lead Resistance from the Total.
    - *Math:* `1.2Ω (Total) - 0.2Ω (Leads) = 1.00Ω (Actual)`
    - *Why?* For a 1.0Ω resistor, a 0.2Ω error is huge (20%)! Not subtracting it could lead you to bias your amp dangerously hot.
-6. **Adjust:** In the "CAL SETUP" menu, select **"Adj Shunt Res A"** and enter the **Actual Value** (e.g., 1.00).
+6. **Adjust:** In the Calibration screen, select **"Adj Shunt Res A"** and enter the **Actual Value** (e.g., 1.00).
 7. **Repeat** for Probe B.
 
 #### C. Voltage Threshold Limiter
@@ -572,7 +615,12 @@ The **"Adj Voltage Limit"** setting is a safety tripwire.
 * **Setting it:** Set this value slightly higher than your amplifier's maximum plate voltage (e.g., if your amp runs at 450V, set the limit to 500V or 550V). This protects the meter and warns you if the amp is behaving abnormally.
 
 #### D. Saving & Exiting
-When you are finished calibrating, simply scroll to **"[EXIT]"** (or **"[BACK]"**) in the menu and press the **Center Button**. This ensures all your new settings are permanently stored in the EEPROM memory.
+Your settings are written to EEPROM **automatically** — each time you press **Center** to advance to the next field, and again whenever you leave the screen. There is no separate "save" item to look for. To leave calibration:
+
+* **Short-press Center** to step through the fields (Scale A → Scale B → Shunt A → Shunt B → Limit). Pressing **Center** on the last field (**Limit**) exits and returns you to the **Tube Profile Manager**.
+* **Press and hold Center** at any point to jump straight back to the main **Tube Select** screen.
+
+Either exit stores your latest values, so you can leave whichever way is convenient.
 
 ---
 
