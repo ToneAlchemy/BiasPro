@@ -4,6 +4,8 @@ This repository contains the complete, mathematically hardened firmware for a pr
 
 This firmware was completely re-architected from scratch using modern, memory-safe embedded C++ principles to eliminate dynamic memory leaks and ensure rock-solid physical safety lockouts.
 
+> **Current firmware version: v1.1.0.** See [CHANGELOG.md](CHANGELOG.md) for the full change history. Highlights since v1.0.0: a **live plate-voltage readout on the Calibration screen** (match it to your DMM as you adjust), **sensor-glitch rejection** so a noisy ADC read can't false-release the lockout or flash 0 V, **profile-store protection** so a bad edit can't wipe your saved tube profiles, and a **flicker-free VOLTAGE LOCKOUT screen**.
+
 | **1. Splash Screen** | **2. Tube Select** | **3. Live Bias Mode** |
 | :---: | :---: | :---: |
 | <img src="./IMAGES/Splash_Screen.jpg" width="250" height="200"> | <img src="./IMAGES/SELECT_PROFILE.jpg" width="250" height="200"> | <img src="./IMAGES/LIVEBIAS.jpg"  width="250" height="200"> |
@@ -200,6 +202,8 @@ BiasPro introduces professional-grade data integrity and safety features not fou
 
 * **Safety Clamps:** The Calibration Menu now prevents users from accidentally setting dangerous values (e.g., setting a shunt resistor to 0.0Ω or a voltage scaler to 0), effectively "clamping" entries to safe, realistic ranges.
 
+* **Profile Store Protection:** Your custom tube profiles are validated on both save and load. A malformed entry (for example a blank name) is rejected rather than written, so a bad edit can never silently wipe your saved profiles back to defaults on the next power-up.
+
 ### 🛡️ Safety & Reliability
 * **Active Over-Voltage Monitor:** While in **Live Bias mode**, the plate voltage is checked on every measurement cycle; if it exceeds the configured limit the interface locks and displays a red "LOCKOUT" warning until the voltage falls back into the safe band. (The lock, once tripped, persists across screens until released.) **This automatic check runs only in Live Bias mode — it is _not_ active on the Calibration screen**, even though that screen shows a live voltage. During calibration, rely on your DMM and your own judgement (see the Calibration Guide warning below).
 
@@ -207,8 +211,12 @@ BiasPro introduces professional-grade data integrity and safety features not fou
 
 * **Input Debouncing:** Advanced state-machine logic eliminates switch "recoil" and bounce, ensuring the cursor never jumps unintentionally.
 
+* **Sensor-Glitch Rejection:** A failed or corrupted ADC read (for example from an EMI burst) is flagged invalid rather than trusted. An invalid reading can **never** release an active voltage lockout, and Live Bias mode holds the last good measurement instead of momentarily flashing 0 V.
+
+* **Flicker-Free Display:** Every screen — including the red VOLTAGE LOCKOUT alert — uses incremental redraw, so critical readouts stay rock-steady instead of strobing.
+
 ### ⚙️ On-Board Calibration
-* **Software Calibration:** Shunt resistance and Voltage Divider scaling can be adjusted via the screen menu and saved to EEPROM. You do not need to edit the source code to calibrate the unit.
+* **Software Calibration:** Shunt resistance and Voltage Divider scaling can be adjusted via the screen menu and saved to EEPROM. You do not need to edit the source code to calibrate the unit. Edits save **automatically** when you advance to the next field or leave the screen — there is no separate "save" step — which also minimises wear on the EEPROM.
 
 * **Live Voltage Feedback:** While adjusting the Scale or Shunt fields in Calibration mode, the screen displays a live, non-blocking computed plate voltage (refreshed every ~350 ms) for the active probe. This allows you to match the calibration to your DMM readings in real time.
 

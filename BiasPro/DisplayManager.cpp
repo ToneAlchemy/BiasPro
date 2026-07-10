@@ -502,7 +502,8 @@ void DisplayManager::drawCalibrationRow(uint8_t fieldIndex, bool selected,
 }
 
 void DisplayManager::updateCalibrationLiveVoltage(float volts) {
-  const int16_t whole = static_cast<int16_t>(volts + 0.5f);
+  const float clamped = volts < 0.0f ? 0.0f : (volts > 9999.0f ? 9999.0f : volts);
+  const int16_t whole = static_cast<int16_t>(clamped + 0.5f);
   if (calLiveVoltsPrimed_ && whole == calLiveVolts_) {
     return;
   }

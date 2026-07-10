@@ -7,3 +7,5 @@ build/
 *.o
 *.d
 *.exe
+__pycache__/
+*.pyc
