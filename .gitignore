@@ -9,3 +9,4 @@ build/
 *.exe
 __pycache__/
 *.pyc
+biaspro_host_tests
