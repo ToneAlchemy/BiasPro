@@ -57,6 +57,7 @@ ButtonEvent HardwareIO::readButtonEvent() {
     if (stableMask_ != 0 && !pressActive_) {
       pressActive_ = true;
       longCenterSent_ = false;
+      holdLeftSent_ = false;
       pressedMask_ = stableMask_;
       pressStartMillis_ = now;
       return ButtonEvent::None;
@@ -67,7 +68,7 @@ ButtonEvent HardwareIO::readButtonEvent() {
 
       uint32_t guardMillis = ((pressedMask_ & CenterMask) != 0) ? 250UL : RepeatGuardMillis;
 
-      if (now - lastButtonMillis_ < guardMillis || longCenterSent_) {
+      if (now - lastButtonMillis_ < guardMillis || longCenterSent_ || holdLeftSent_) {
         return ButtonEvent::None;
       }
 
@@ -90,6 +91,17 @@ ButtonEvent HardwareIO::readButtonEvent() {
     longCenterSent_ = true;
     lastButtonMillis_ = now;
     return ButtonEvent::LongCenter;
+  }
+
+  if (
+    pressActive_ &&
+    !holdLeftSent_ &&
+    (stableMask_ & LeftMask) != 0 &&
+    now - pressStartMillis_ >= LongPressMillis
+  ) {
+    holdLeftSent_ = true;
+    lastButtonMillis_ = now;
+    return ButtonEvent::HoldLeft;
   }
 
   return ButtonEvent::None;

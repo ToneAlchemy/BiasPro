@@ -19,5 +19,6 @@ private:
   uint8_t pressedMask_ = 0;
   bool pressActive_ = false;
   bool longCenterSent_ = false;
+  bool holdLeftSent_ = false;
   ButtonEvent pendingEvent_ = ButtonEvent::None;
 };

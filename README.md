@@ -4,7 +4,7 @@ This repository contains the complete, mathematically hardened firmware for a pr
 
 This firmware was completely re-architected from scratch using modern, memory-safe embedded C++ principles to eliminate dynamic memory leaks and ensure rock-solid physical safety lockouts.
 
-> **Current firmware version: v1.1.0.** Highlights since v1.0.0: a **live plate-voltage readout on the Calibration screen** (match it to your DMM as you adjust), **sensor-glitch rejection** so a noisy ADC read can't false-release the lockout or flash 0 V, **profile-store protection** so a bad edit can't wipe your saved tube profiles, and a **flicker-free VOLTAGE LOCKOUT screen**.
+> **Current firmware version: v1.1.1.** Highlights since v1.0.0: a **vertically stacked, horizontally centered layout on the Tube Select and Profile Manager screens** (with improved line spacing for clear reading), a **Hold LEFT shortcut** to escape the Profile Manager directly to Tube Select, a **live plate-voltage readout on the Calibration screen** (match it to your DMM as you adjust), **sensor-glitch rejection** so a noisy ADC read can't false-release the lockout or flash 0 V, **profile-store protection** so a bad edit can't wipe your saved tube profiles, and a **flicker-free VOLTAGE LOCKOUT screen**.
 
 | **1. Splash Screen** | **2. Tube Select** | **3. Live Bias Mode** |
 | :---: | :---: | :---: |
@@ -96,15 +96,15 @@ To guarantee a successful compile, you **must** use these exact library versions
 * `Adafruit ST7735 and ST7789 Library` v1.11.0
 * `Adafruit BusIO` v1.17.4
 
-### 2. CRITICAL: 98% Flash Memory Limit & Bootloaders
-The firmware compiles to approximately **30,382 bytes** of program storage. This is a very tight fit on older hardware, but it will successfully flash to both new and old Arduino Nanos.
+### 2. CRITICAL: 99% Flash Memory Limit & Bootloaders
+The firmware compiles to approximately **30,626 bytes** of program storage. This is a very tight fit on older hardware, but it will successfully flash to both new and old Arduino Nanos.
 
-* **Newer Arduino Nano (Standard Bootloader):** If you have a newer official Nano or a high-quality modern clone, use the `Processor: ATmega328P` setting in the Arduino IDE. These boards use the modern *Optiboot* bootloader, which leaves 32,256 bytes of usable flash space. The firmware will fit easily with roughly **1.8KB to spare**.
+* **Newer Arduino Nano (Standard Bootloader):** If you have a newer official Nano or a high-quality modern clone, use the `Processor: ATmega328P` setting in the Arduino IDE. These boards use the modern *Optiboot* bootloader, which leaves 32,256 bytes of usable flash space. The firmware will fit easily with roughly **1.6KB to spare**.
 
-* **Older Arduino Nano & Generic Clones (Old Bootloader):** Many cheaper clones and older Nanos use the legacy bootloader, which takes up more space and leaves exactly 30,720 bytes of usable flash space. The firmware **will still successfully flash** using the `Processor: ATmega328P (Old Bootloader)` setting, fitting with roughly **338 bytes to spare**:
+* **Older Arduino Nano & Generic Clones (Old Bootloader):** Many cheaper clones and older Nanos use the legacy bootloader, which takes up more space and leaves exactly 30,720 bytes of usable flash space. The firmware **will still successfully flash** using the `Processor: ATmega328P (Old Bootloader)` setting, fitting with roughly **94 bytes to spare**:
   ```text
-  Sketch uses 30382 bytes (98%) of program storage space. Maximum is 30720 bytes.
-  Global variables use 749 bytes (36%) of dynamic memory, leaving 1299 bytes for local variables. Maximum is 2048 bytes.
+  Sketch uses 30626 bytes (99%) of program storage space. Maximum is 30720 bytes.
+  Global variables use 750 bytes (36%) of dynamic memory, leaving 1298 bytes for local variables. Maximum is 2048 bytes.
   ```
   It works perfectly, but you have very little room to add additional features or text without overflowing the memory.
 
@@ -214,6 +214,8 @@ BiasPro introduces professional-grade data integrity and safety features not fou
 * **Sensor-Glitch Rejection:** A failed or corrupted ADC read (for example from an EMI burst) is flagged invalid rather than trusted. An invalid reading can **never** release an active voltage lockout, and Live Bias mode holds the last good measurement instead of momentarily flashing 0 V.
 
 * **Flicker-Free Display:** Every screen — including the red VOLTAGE LOCKOUT alert — uses incremental redraw, so critical readouts stay rock-steady instead of strobing.
+
+* **Centered, Stacked UI Layout:** Selection screens (Tube Select and Profile Manager) feature vertically stacked, horizontally centered text elements with balanced line spacing for improved readability.
 
 ### ⚙️ On-Board Calibration
 * **Software Calibration:** Shunt resistance and Voltage Divider scaling can be adjusted via the screen menu and saved to EEPROM. You do not need to edit the source code to calibrate the unit. Edits save **automatically** when you advance to the next field or leave the screen — there is no separate "save" step — which also minimises wear on the EEPROM.
@@ -473,11 +475,10 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 
 ## User Guide & Navigation
 
-### Basic Navigation
-
 * **Left / Right Buttons:** Scroll through menus or adjust values.
 * **Center Button (Short Click):** Select an item, confirm an edit, or advance to the next field.
 * **Center Button (Long Hold):** Open the Tool Menu or return to the main screen.
+* **Left Button (Long Hold / Hold LEFT):** On the Profile Manager screen, immediately return to the main Tube Select screen without selecting a profile.
 
 ### RAW SENSORS (Diagnostics Mode)
 **"RAW SENSORS (DIAGNOSTIC)"** is a highly visible, dedicated menu item located at the very end of the Tube Profile Selection carousel. It is accessed and exited using a standard short click of the center button. Selecting this profile enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.

@@ -287,6 +287,10 @@ void ApplicationController::tick() {
       calibrationDirty_ = false;
       screenNeedsPaint_ = true;
       return;
+    } else if (event == ButtonEvent::HoldLeft) {
+      activeScreen_ = ScreenId::TubeSelect;
+      screenNeedsPaint_ = true;
+      return;
     }
 
     if (screenNeedsPaint_) {

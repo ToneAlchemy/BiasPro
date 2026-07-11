@@ -73,6 +73,19 @@ void printFixedHundredth(Adafruit_ST7735 &tft, int32_t value) {
 int32_t adcCountToHundredthMillivolts(int16_t count) {
   return (static_cast<int32_t>(count) * 25L) / 32L;
 }
+
+void clearSelectionRow(Adafruit_ST7735 &tft) {
+  tft.fillRect(0, 46, 160, 40, ST7735_BLACK);
+}
+
+void printCenteredLabel(Adafruit_ST7735 &tft, const char *label) {
+  uint8_t len = 0;
+  while (label[len] && len < 6) {
+    len++;
+  }
+  tft.setCursor(80 - (len * 6), 48);
+  tft.print(label);
+}
 } // namespace
 
 DisplayManager::DisplayManager()
@@ -137,30 +150,33 @@ void DisplayManager::drawTubeSelection(const TubeProfile *profiles,
 
 void DisplayManager::updateTubeSelection(const TubeProfile *profiles,
                                          uint8_t count, uint8_t selectedIndex) {
-  tft_.fillRect(12, 48, 136, 28, ST7735_BLACK);
+  clearSelectionRow(tft_);
 
   tft_.setTextSize(2);
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
-  tft_.setCursor(18, 52);
 
   if (selectedIndex == count) {
+    tft_.setCursor(14, 48); // 80 - (11 * 12 / 2) = 14
     tft_.print(F("RAW SENSORS"));
   } else if (count > 0 && selectedIndex < count) {
-    tft_.print(profiles[selectedIndex].label);
+    printCenteredLabel(tft_, profiles[selectedIndex].label);
   } else {
+    tft_.setCursor(56, 48); // 80 - (4 * 12 / 2) = 56
     tft_.print(F("NONE"));
   }
 
   tft_.setTextSize(1);
   tft_.setTextColor(ST7735_YELLOW, ST7735_BLACK);
-  tft_.setCursor(80, 57);
 
   if (selectedIndex == count) {
-    // Intentionally empty: RAW SENSORS spans the entire row
+    // Intentionally empty
   } else if (count > 0 && selectedIndex < count) {
-    tft_.print(profiles[selectedIndex].maxDissipationWatts);
-    tft_.print(F("W"));
+    uint8_t watts = profiles[selectedIndex].maxDissipationWatts;
+    tft_.setCursor((watts >= 10) ? 71 : 74, 74);
+    tft_.print(watts);
+    tft_.print('W');
   } else {
+    tft_.setCursor(74, 74); // 80 - (2 * 6 / 2) = 74
     tft_.print(F("--"));
   }
 }
@@ -182,15 +198,15 @@ void DisplayManager::drawLiveBiasFrame(const TubeProfile &tube) {
 
   tft_.setTextColor(ST7735_YELLOW, ST7735_BLACK);
   tft_.setCursor(30, 22);
-  tft_.print(F("A"));
+  tft_.print('A');
   tft_.setCursor(110, 22);
-  tft_.print(F("B"));
+  tft_.print('B');
 
   tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
   tft_.setCursor(8, 38);
-  tft_.print(F("V"));
+  tft_.print('V');
   tft_.setCursor(88, 38);
-  tft_.print(F("V"));
+  tft_.print('V');
 
   tft_.setCursor(8, 52);
   tft_.print(F("mA"));
@@ -198,14 +214,14 @@ void DisplayManager::drawLiveBiasFrame(const TubeProfile &tube) {
   tft_.print(F("mA"));
 
   tft_.setCursor(8, 66);
-  tft_.print(F("W"));
+  tft_.print('W');
   tft_.setCursor(88, 66);
-  tft_.print(F("W"));
+  tft_.print('W');
 
   tft_.setCursor(8, 82);
-  tft_.print(F("%"));
+  tft_.print('%');
   tft_.setCursor(88, 82);
-  tft_.print(F("%"));
+  tft_.print('%');
 
   tft_.setTextColor(ColorInfo, ST7735_BLACK);
   tft_.setCursor(18, 111);
@@ -376,33 +392,40 @@ void DisplayManager::drawProfileManager(const TubeProfile *profiles,
   tft_.setCursor(7, 116);
   tft_.print(F("Hold C cal"));
 
+  tft_.setCursor(70, 116);
+  tft_.print(F("Hold LEFT: Back"));
+
   updateProfileManagerSelection(profiles, count, selectedIndex);
 }
 
 void DisplayManager::updateProfileManagerSelection(const TubeProfile *profiles,
                                                    uint8_t count,
                                                    uint8_t selectedIndex) {
-  tft_.fillRect(18, 48, 134, 28, ST7735_BLACK);
+  clearSelectionRow(tft_);
 
   tft_.setTextSize(2);
-  tft_.setCursor(20, 50);
+  tft_.setTextColor(ST7735_WHITE, ST7735_BLACK);
 
   if (count > 0 && selectedIndex < count) {
-    tft_.print(profiles[selectedIndex].label);
+    printCenteredLabel(tft_, profiles[selectedIndex].label);
   } else {
+    tft_.setCursor(50, 48); // 80 - (5 * 12 / 2) = 50
     tft_.print(F("EMPTY"));
   }
 
   tft_.setTextSize(1);
   tft_.setTextColor(ST7735_YELLOW, ST7735_BLACK);
-  tft_.setCursor(80, 55);
 
   if (count > 0 && selectedIndex < count) {
-    tft_.print(profiles[selectedIndex].maxDissipationWatts);
+    uint8_t watts = profiles[selectedIndex].maxDissipationWatts;
+    uint16_t permille = profiles[selectedIndex].screenCurrentPermille;
+    tft_.setCursor(59 - 3 * ((watts >= 10 ? 2 : 1) + (permille >= 100 ? 3 : (permille >= 10 ? 2 : 1))), 74);
+    tft_.print(watts);
     tft_.print(F("W "));
-    tft_.print(profiles[selectedIndex].screenCurrentPermille);
+    tft_.print(permille);
     tft_.print(F("/1000"));
   } else {
+    tft_.setCursor(74, 74);
     tft_.print(F("--"));
   }
 }
@@ -481,11 +504,11 @@ void DisplayManager::drawCalibrationRow(uint8_t fieldIndex, bool selected,
   if (fieldIndex == 0) {
     tft_.print(F("Scale A "));
     printFixedHundredth(tft_, value);
-    tft_.print(F(" "));
+    tft_.print(' ');
   } else if (fieldIndex == 1) {
     tft_.print(F("Scale B "));
     printFixedHundredth(tft_, value);
-    tft_.print(F(" "));
+    tft_.print(' ');
   } else if (fieldIndex == 2) {
     tft_.print(F("Shunt A "));
     tft_.print(value);
@@ -497,7 +520,8 @@ void DisplayManager::drawCalibrationRow(uint8_t fieldIndex, bool selected,
   } else {
     tft_.print(F("Limit "));
     tft_.print(value);
-    tft_.print(F("V "));
+    tft_.print('V');
+    tft_.print(' ');
   }
 }
 
@@ -533,15 +557,15 @@ void DisplayManager::drawVoltageLockoutFrame(uint16_t limit) {
 
   tft_.setTextSize(1);
   tft_.setCursor(18, 68);
-  tft_.print(F("A"));
+  tft_.print('A');
 
   tft_.setCursor(88, 68);
-  tft_.print(F("B"));
+  tft_.print('B');
 
   tft_.setCursor(20, 90);
   tft_.print(F("Limit "));
   tft_.print(limit);
-  tft_.print(F("V"));
+  tft_.print('V');
 
   tft_.setCursor(16, 110);
   tft_.print(F("Wait safe band"));

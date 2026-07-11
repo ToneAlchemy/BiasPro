@@ -10,7 +10,8 @@ enum class ButtonEvent : uint8_t {
   Left,
   Right,
   Center,
-  LongCenter
+  LongCenter,
+  HoldLeft
 };
 
 enum class ScreenId : uint8_t {
