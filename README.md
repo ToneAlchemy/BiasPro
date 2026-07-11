@@ -576,7 +576,7 @@ The meter comes with **Default** calibration settings (Automatic), but for profe
 ### Calibration Field Ranges & Adjustments
 To prevent entering invalid or dangerous values, the firmware enforces strict calibration bounds and adjustment steps:
 * **Voltage Scale (Adj Volt Scale A / B):** Range is `5.00` to `20.00` (adjusted in steps of `0.05` via Left/Right).
-* **Shunt Resistor (Adj Shunt Res A / B):** Range is `0.50`Ω to `5.00`Ω (adjusted in steps of `0.01`Ω, displayed in ohms, stored internally in milliohms).
+* **Shunt Resistor (Adj Shunt Res A / B):** Range is `500mR` to `5000mR` (representing 0.50Ω to 5.00Ω, adjusted in steps of `10mR`). The software displays and stores this in milliohms (mR) to maintain high precision without the memory overhead of floating-point decimals.
 * **Voltage Limit (Adj Voltage Limit):** Range is `300V` to `800V` (adjusted in steps of `5V`).
 
 ### Method 1: Default Calibration (Automatic)
@@ -610,13 +610,15 @@ If you are using commercial probes like the **Tube Depot Bias Scout**, they typi
 3. **Find DMM Lead Resistance (Critical for Accuracy):**
    - Turn your DMM to its lowest Resistance (Ω) setting.
    - Touch the Red and Black DMM probes firmly together.
-   - Note the number (e.g., **0.2Ω**). This is your "Lead Resistance."
+   - Note the number (e.g., **0.1Ω**). This is your "Lead Resistance."
 4. **Measure Probe:** Connect one DMM lead to the **Black** plug and the other to the **White** plug of the bias probe. Write down the total resistance (e.g., **1.2Ω**).
-5. **Calculate Actual Value:** Subtract the Lead Resistance from the Total.
-   - *Math:* `1.2Ω (Total) - 0.2Ω (Leads) = 1.00Ω (Actual)`
-   - *Why?* For a 1.0Ω resistor, a 0.2Ω error is huge (20%)! Not subtracting it could lead you to bias your amp dangerously hot.
-6. **Adjust:** In the Calibration screen, select **"Adj Shunt Res A"** and enter the **Actual Value** (e.g., 1.00).
-7. **Repeat** for Probe B.
+5. **Calculate True Resistance:** Subtract the Lead Resistance from the Total.
+   - *Math:* `1.2Ω (Total) - 0.1Ω (Leads) = 1.1Ω (True Resistance)`
+   - *Why?* For a ~1.0Ω resistor, a 0.1Ω error is huge (10%)! Not subtracting this will cause the BiasPro to calculate your current and wattage inaccurately, which could lead you to bias your amp dangerously hot.
+6. **Convert to Milliohms (mR):** To preserve flash memory and avoid heavy floating-point math, the software uses milliohms (mR) for whole-number precision. Multiply your True Resistance by 1000.
+   - *Math:* `1.1Ω × 1000 = 1100mR`
+7. **Adjust:** In the Calibration screen, select **"Adj Shunt A"** and input your calculated milliohm value (e.g., **1100**).
+8. **Repeat** for Probe B. *(Note: If your DMM reading fluctuates for a probe—for example, bouncing between 1.1Ω and 1.2Ω—you can split the difference and enter a median value like **1050** for maximum precision).*
 
 #### C. Voltage Threshold Limiter
 The **"Adj Voltage Limit"** setting is a safety tripwire.
