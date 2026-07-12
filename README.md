@@ -4,7 +4,7 @@ This repository contains the complete, mathematically hardened firmware for a pr
 
 This firmware was completely re-architected from scratch using modern, memory-safe embedded C++ principles to eliminate dynamic memory leaks and ensure rock-solid physical safety lockouts.
 
-> **Current firmware version: v1.1.1.** Highlights since v1.0.0: a **vertically stacked, horizontally centered layout on the Tube Select and Profile Manager screens** (with improved line spacing for clear reading), a **Hold LEFT shortcut** to escape the Profile Manager directly to Tube Select, a **live plate-voltage readout on the Calibration screen** (match it to your DMM as you adjust), **sensor-glitch rejection** so a noisy ADC read can't false-release the lockout or flash 0 V, **profile-store protection** so a bad edit can't wipe your saved tube profiles, and a **flicker-free VOLTAGE LOCKOUT screen**.
+> **Current firmware version: v1.1.1** — see [CHANGE_LOG.md](CHANGE_LOG.md) for the full change history. Highlights since v1.0.0: a **vertically stacked, horizontally centered layout on the Tube Select and Profile Manager screens** (with improved line spacing for clear reading), a **Hold LEFT shortcut** to escape the Profile Manager directly to Tube Select, a **live plate-voltage readout on the Calibration screen** (match it to your DMM as you adjust), **sensor-glitch rejection** so a noisy ADC read can't false-release the lockout or flash 0 V, **profile-store protection** so a bad edit can't wipe your saved tube profiles, and a **flicker-free VOLTAGE LOCKOUT screen**.
 
 | **1. Splash Screen** | **2. Tube Select** | **3. Live Bias Mode** |
 | :---: | :---: | :---: |
@@ -453,7 +453,7 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 
 * **Uploads:** It is safe to connect to the computer to upload code **ONLY IF** the bias probes are **disconnected** from the amplifier.
 
-* **Debugging:** You can use the Arduino IDE Serial Monitor to view debug logs, but **ensure the probes are NOT connected to a live amplifier**. If you must debug a live circuit, you must use a **USB Isolator** to protect your equipment.
+* **Debugging:** You can use the Arduino IDE Serial Monitor (9600 baud) to confirm the firmware boots (it prints a `BiasPro Booting...` status message), but **ensure the probes are NOT connected to a live amplifier**. If you must debug a live circuit, you must use a **USB Isolator** to protect your equipment.
 
 ---
 
@@ -481,7 +481,7 @@ You can power the Arduino Nano via the `VIN` and `GND` pins using a 9V battery.
 * **Left Button (Long Hold / Hold LEFT):** On the Profile Manager screen, immediately return to the main Tube Select screen without selecting a profile.
 
 ### RAW SENSORS (Diagnostics Mode)
-**"RAW SENSORS (DIAGNOSTIC)"** is a highly visible, dedicated menu item located at the very end of the Tube Profile Selection carousel. It is accessed and exited using a standard short click of the center button. Selecting this profile enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.
+**"RAW SENSORS"** is a highly visible, dedicated diagnostics menu item located at the very end of the Tube Profile Selection carousel. It is accessed and exited using a standard short click of the center button. Selecting this profile enters a diagnostics mode that displays the raw telemetry data coming directly from the Analog-to-Digital Converter (ADC) before final mathematical conversions are applied.
 
 * **Raw ADC Counts (e.g., `CATH: 5254`):** These are the unconverted digital integer values read directly from the ADS1115 chip. The chip measures the physical voltage and outputs a proportional number ranging from `-32768` to `+32767`.
 
@@ -575,9 +575,9 @@ The meter comes with **Default** calibration settings (Automatic), but for profe
 
 ### Calibration Field Ranges & Adjustments
 To prevent entering invalid or dangerous values, the firmware enforces strict calibration bounds and adjustment steps:
-* **Voltage Scale (Adj Volt Scale A / B):** Range is `5.00` to `20.00` (adjusted in steps of `0.05` via Left/Right).
-* **Shunt Resistor (Adj Shunt Res A / B):** Range is `500mR` to `5000mR` (representing 0.50Ω to 5.00Ω, adjusted in steps of `10mR`). The software displays and stores this in milliohms (mR) to maintain high precision without the memory overhead of floating-point decimals.
-* **Voltage Limit (Adj Voltage Limit):** Range is `300V` to `800V` (adjusted in steps of `5V`).
+* **Voltage Scale (on-screen: `Scale A` / `Scale B`):** Range is `5.00` to `20.00` (adjusted in steps of `0.05` via Left/Right).
+* **Shunt Resistor (on-screen: `Shunt A` / `Shunt B`):** Range is `500mR` to `5000mR` (representing 0.50Ω to 5.00Ω, adjusted in steps of `10mR`). The software displays and stores this in milliohms (mR) to maintain high precision without the memory overhead of floating-point decimals.
+* **Voltage Limit (on-screen: `Limit`):** Range is `300V` to `800V` (adjusted in steps of `5V`).
 
 ### Method 1: Default Calibration (Automatic)
 When you first power on the device (or after a reset), it loads standard default values:
@@ -593,7 +593,7 @@ For the highest accuracy, use this method to match the meter readings to a trust
 1. **Safety First:** Refer to your amplifier's schematic to find a safe test point for the B+ Voltage (Plate Voltage) that supplies Pin 3 of the power tubes.
 2. **Connect:** With the amp powered off and drained, connect the Bias Probe to the socket.
 3. **Measure:** Power on the amp. Use your DMM to measure the actual DC Voltage at the safe test point you identified.
-4. **Adjust:** In the Calibration screen, select **"Adj Volt Scale A"**.
+4. **Adjust:** In the Calibration screen, step to the **"Scale A"** field (short-press Center to advance between fields).
 5. **Match:** Use the Left/Right buttons to adjust the scale factor until the **"Live V"** on the screen matches the voltage shown on your DMM.
 6. **Repeat** for Probe B.
 
@@ -617,11 +617,11 @@ If you are using commercial probes like the **Tube Depot Bias Scout**, they typi
    - *Why?* For a ~1.0Ω resistor, a 0.1Ω error is huge (10%)! Not subtracting this will cause the BiasPro to calculate your current and wattage inaccurately, which could lead you to bias your amp dangerously hot.
 6. **Convert to Milliohms (mR):** To preserve flash memory and avoid heavy floating-point math, the software uses milliohms (mR) for whole-number precision. Multiply your True Resistance by 1000.
    - *Math:* `1.1Ω × 1000 = 1100mR`
-7. **Adjust:** In the Calibration screen, select **"Adj Shunt A"** and input your calculated milliohm value (e.g., **1100**).
+7. **Adjust:** In the Calibration screen, step to the **"Shunt A"** field and input your calculated milliohm value (e.g., **1100**).
 8. **Repeat** for Probe B. *(Note: If your DMM reading fluctuates for a probe—for example, bouncing between 1.1Ω and 1.2Ω—you can split the difference and enter a median value like **1050** for maximum precision).*
 
 #### C. Voltage Threshold Limiter
-The **"Adj Voltage Limit"** setting is a safety tripwire.
+The **"Limit"** setting is a safety tripwire.
 * **How it works:** If the probe detects a voltage higher than this setting (default 600V), the device immediately triggers a Red "DANGER" screen and locks the interface.
 * **Setting it:** Set this value slightly higher than your amplifier's maximum plate voltage (e.g., if your amp runs at 450V, set the limit to 500V or 550V). This protects the meter and warns you if the amp is behaving abnormally.
 
@@ -642,6 +642,26 @@ If you are building this on perfboard (instead of using the custom PCB), we stro
 * **Orientation:** The "Stripe" (Cathode) of the Zener diode must face the Signal wire; the other end goes to Ground.
 * **Function:** If a tube shorts and sends high voltage down the probe line, the Zener diode will "clamp" the voltage to 5.1V, sacrificing itself to save the ADS1115 and Arduino.
 *(Note: The custom PCB already includes these diodes).*
+
+---
+
+## 💬 Frequently Asked Questions (FAQ)
+
+### 1. Is the BiasPro actually accurate down to four significant figures?
+
+**Yes.** BiasPro v1.1.1 achieves and delivers this four-digit precision across all metrics (`0.1V` resolution for plate voltage and `0.1mA` for cathode current) through two key engineering upgrades:
+
+* **High-Precision 16-Bit Telemetry:** Bypassing the stock 10-bit Arduino ADC in favor of an ADS1115 ADC managed directly via targeted I2C register commands allows for granular data capture down to a tiny `0.0078125 mV` per bit.
+
+* **Empirical Software Calibration:** By taking measurements with a high-quality multimeter (such as a Fluke 115) and factoring out multimeter lead resistance, you can enter custom milliohm (mR) shunt values and scale factors directly into the on-board EEPROM menu. This process empirically matches the math engine to the unique physical tolerances of your probes.
+
+### 2. Does the device monitor live tube drift?
+
+**Yes, explicitly and dynamically.** The BiasPro is a continuous monitor designed for active bench analysis, rather than a device that merely captures a snapshot.
+
+* **Thermal Drift Monitoring:** While running in **Live Bias** mode, the system continuously polls the ADC channels several times per second, maintaining steady readouts through flicker-free incremental redraws. This feature allows technicians to let the amplifier idle and track current drift over extended one-hour burn-in windows.
+
+* **Active Safety Catching:** If a power tube encounters a severe failure such as thermal runaway or a structural grid short, the plate voltage or current will drift uncontrollably. BiasPro actively monitors this loop on every cycle and will instantly trip the red **VOLTAGE LOCKOUT** emergency screen to secure the workbench.
 
 ---
 
