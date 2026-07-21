@@ -47,10 +47,11 @@ PROBE CONSTRUCTION (if building custom probes)
 =========================================================================
 
 [ ] 2x Octal Sockets (for tube connection)
-    - Link:  https://s.click.aliexpress.com/e/_c40bYCer
+    - Link:  https://www.amplifiedparts.com/products/socket-8-pin-octal-amphenol-style-1-532-mounting-hole 
 
 [ ] 2x Octal Bases (to build the probe housing)
     - Link: https://s.click.aliexpress.com/e/_c3A4w85D
+    - Link: https://www.amplifiedparts.com/products/tube-base-8-pin-octal-125-diameter
 
 [ ] 2x 1MΩ (1,000,000 Ohm), 1% tolerance, 1/2W Metal Film Resistor
     - Link: https://s.click.aliexpress.com/e/_c4Bw7hpH
