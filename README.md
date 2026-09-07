@@ -86,6 +86,33 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 | **ADS1115 SDA** | A4 |
 | **ADS1115 SCL** | A5 |
 
+### 🖥️ Display Hardware Differences: Official Adafruit vs. Generic Clone ST7735
+
+When sourcing components for BiasPro, you will encounter two primary variants of 1.8" ST7735 SPI TFT displays. Understanding their electrical design is essential for reliable wiring and long display service life:
+
+| Feature | Official Adafruit 1.8" TFT (PID 358 / 618) | Generic Clone / Chinese ST7735S (`Driver IC: ST7735S` / `NOMEN_TEC`) |
+| :--- | :--- | :--- |
+| **Onboard 3.3V LDO Regulator** | ✅ Yes (built-in regulator) | ⚠️ Often missing (or transistor `Q1`/`J3Y` for backlight switching only) |
+| **Onboard Logic Level Shifter** | ✅ Yes (active CD74HC4050 buffer IC) | ❌ **None** (Header pins route straight to display glass ribbon) |
+| **5V Logic Compatibility** | Native 5V plug-and-play | ⚠️ **Requires 500Ω to 2kΩ series resistors on all data lines** |
+| **Typical Header Labels** | `VIN, GND, CLK, MOSI, CS, D/C, RESET, LITE` | `GND, VCC/VDD, SCL, SDA, RES/RST, DC, CS, BL/BLK` |
+
+#### 1. Official Adafruit Breakout
+* **Power:** Supply `VIN` with **5V** or **3.3V** (the onboard regulator provides clean 3.3V to the display glass).
+* **Signals:** Wire all 5 SPI lines (`D13, D11, D10, D9, D8`) directly to the Arduino Nano with **no resistors required**. The onboard 74HC4050 buffer automatically shifts 5V logic down to 3.3V safely.
+
+#### 2. Generic / Chinese Clone Modules (Most Common)
+* Budget modules (such as those marked `Driver IC: ST7735S` or `NOMEN_TEC V2.0`) run on native 3.3V silicon and lack active level-shifter ICs.
+* **Factory Wiring Requirement:** The manufacturer specification explicitly mandates that when driven from a 5V microcontroller (like the Arduino Nano), you **must place a resistor between 500Ω and 2kΩ in series on every data line** (a value of **1kΩ to 1.5kΩ** is ideal):
+  * **Nano `D13`** $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `SCL`
+  * **Nano `D11`** $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `SDA`
+  * **Nano `D10`** $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `CS`
+  * **Nano `D9`**  $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `DC`
+  * **Nano `D8`**  $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `RES`
+* **Why this is critical:** The series resistors limit current into the ST7735S internal ESD clamping diodes to safe microamp levels ($\approx 1.4\text{ mA}$), preventing excessive silicon heating, display bleaching, contrast fading, or premature burnout.
+* **Power (`VCC` / `VDD`):** Connect to `5V` (as specified in the factory datasheet when series resistors are fitted) or to a clean, regulated `3.3V` rail.
+* **Backlight (`BL` / `BLK`):** The onboard transistor (`Q1` / `J3Y`) and base resistor (`R3` / `R1`) handle switching. Connect `BL` to `3V3` (or `5V`) for constant illumination, or to an Arduino GPIO pin through a 1kΩ resistor if software dimming is desired.
+
 ---
 
 ## 🛠️ Build & Flash Instructions
@@ -145,6 +172,14 @@ If your display lights up but shows static, garbage pixels, or wrong colors:
 Change it to one of the following and re-upload until the screen looks correct:
   * `tft.initR(INITR_18GREENTAB);`
   * `tft.initR(INITR_18REDTAB);`
+
+### 4. Arduino Nano "L" LED Flickering Constantly?
+If you notice the onboard yellow/orange **`L`** LED on your Arduino Nano flickering continuously while the device is running:
+
+* **This is completely normal and indicates healthy operation.**
+* On the Arduino Nano hardware, the onboard `L` LED is hardwired directly to digital pin **`D13`**.
+* In BiasPro, `D13` serves as the high-speed SPI Clock (`TftSclkPin`). Every time the live bias values update (multiple times per second), thousands of SPI clock pulses toggle D13 at high frequency.
+* The flickering `L` LED effectively functions as a live hardware activity monitor showing active SPI communication between the ATmega328P and the display.
 
 ---
 
