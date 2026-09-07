@@ -68,7 +68,7 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 ## ⚙️ Hardware Specifications
 
 * **MCU:** Arduino Nano / ATmega328P
-* **Display:** 1.8" 128×160 ST7735/ST7735S SPI TFT (Adafruit or compatible generic clone; see [Display Hardware Differences](#%EF%B8%8F-display-hardware-differences-official-adafruit-vs-generic-clone-st7735) below)
+* **Display:** 1.8" 128×160 ST7735/ST7735S SPI TFT (Adafruit PID 358 or compatible generic clone; see [Display Hardware Differences](#%EF%B8%8F-display-hardware-differences-adafruit-breakout-vs-generic-clone-modules) below)
 * **ADC:** ADS1115 (16-bit) at I2C address `0x48`
 * **Inputs:** Three tactile switches (Left, Right, Center)
 
@@ -86,24 +86,32 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 | **ADS1115 SDA** | A4 |
 | **ADS1115 SCL** | A5 |
 
-### 🖥️ Display Hardware Differences: Official Adafruit vs. Generic Clone ST7735
+### 🖥️ Display Hardware Differences: Adafruit Breakout vs. Generic Clone Modules
 
-When sourcing components for BiasPro, you will encounter two primary variants of 1.8" ST7735 SPI TFT displays. Understanding their electrical design is essential for reliable wiring and long display service life:
+When sourcing components for BiasPro, you will encounter two primary hardware paths for 1.8" SPI TFT displays. Understanding their electrical architecture is essential for reliable wiring and long display service life:
 
-| Feature | Official Adafruit 1.8" TFT (PID 358 / 618) | Generic Clone / Chinese ST7735S (`Driver IC: ST7735S` / `NOMEN_TEC`) |
+| Feature | Adafruit 1.8" TFT Breakout (PID 358) | Generic Clone Module (`Driver IC: ST7735S` / `NOMEN_TEC`) |
 | :--- | :--- | :--- |
-| **Onboard 3.3V LDO Regulator** | ✅ Yes (built-in regulator) | ⚠️ Often missing (or transistor `Q1`/`J3Y` for backlight switching only) |
-| **Onboard Logic Level Shifter** | ✅ Yes (active CD74HC4050 buffer IC) | ❌ **None** (Header pins route straight to display glass ribbon) |
-| **5V Logic Compatibility** | Native 5V plug-and-play | ⚠️ **Requires 500Ω to 2kΩ series resistors on all data lines** |
+| **Driver IC** | **ST7735R** | Usually **ST7735S** |
+| **Onboard 3.3V LDO Regulator** | ✅ Yes (ultra-low-dropout 3.3V regulator) | ⚠️ Often absent (or transistor `Q1`/`J3Y` for backlight only) |
+| **Onboard Logic Level Shifter** | ✅ Yes (active CD74HC4050 buffer IC) | ❌ **None** (header pins route straight to display glass ribbon) |
+| **5V Supply Compatibility** | ✅ Yes (accepts 3.3V – 5V on `VIN`) | Module-dependent (accepts 5V when data lines are protected) |
+| **5V Logic Compatibility** | ✅ Native 5V plug-and-play | ⚠️ **Requires 500Ω to 2kΩ series resistors on all data lines** |
 | **Typical Header Labels** | `VIN, GND, CLK, MOSI, CS, D/C, RESET, LITE` | `GND, VCC/VDD, SCL, SDA, RES/RST, DC, CS, BL/BLK` |
 
-#### 1. Official Adafruit Breakout
-* **Power:** Supply `VIN` with **5V** or **3.3V** (the onboard regulator provides clean 3.3V to the display glass).
-* **Signals:** Wire all 5 SPI lines (`D13, D11, D10, D9, D8`) directly to the Arduino Nano with **no resistors required**. The onboard 74HC4050 buffer automatically shifts 5V logic down to 3.3V safely.
+> [!NOTE]
+> **Important Distinction on Adafruit PID 358 vs. PID 618:**  
+> The official recommended reference part is the **Adafruit PID 358** assembled breakout (which includes the PCB, microSD slot, 3.3V regulator, and CD74HC4050 level shifter).  
+> In contrast, **Adafruit PID 618 is the raw, unmounted 1.8" TFT panel only** (flexible ribbon cable, no PCB). PID 618 is strictly 3.3V-only and requires external regulation and level shifting when paired with a 5V Arduino Nano.
 
-#### 2. Generic / Chinese Clone Modules (Most Common)
+#### 1. Official Adafruit Breakout (PID 358)
+* **Power:** Supply `VIN` with **5V** or **3.3V** (the onboard regulator provides clean 3.3V to the display glass).
+* **Signals:** Wire all 5 SPI lines (`D13, D11, D10, D9, D8`) directly to the Arduino Nano with **no resistors required**. The onboard CD74HC4050 buffer automatically shifts 5V logic down to 3.3V safely.
+* **Firmware Support:** BiasPro’s firmware uses `tft.initR(INITR_18BLACKTAB)` via the `Adafruit_ST7735` library, which natively targets the ST7735R controller on PID 358.
+
+#### 2. Generic / Chinese Clone Modules (ST7735S)
 * Budget modules (such as those marked `Driver IC: ST7735S` or `NOMEN_TEC V2.0`) run on native 3.3V silicon and lack active level-shifter ICs.
-* **Factory Wiring Requirement:** The manufacturer specification explicitly mandates that when driven from a 5V microcontroller (like the Arduino Nano), you **must place a resistor between 500Ω and 2kΩ in series on every data line** (a value of **1kΩ to 1.5kΩ** is ideal):
+* **Factory Wiring Requirement:** The module manufacturer specification explicitly mandates that when driven from a 5V microcontroller (like the Arduino Nano), you **must place a resistor between 500Ω and 2kΩ in series on every data line** (a value of **1kΩ to 1.5kΩ** is ideal):
   * **Nano `D13`** $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `SCL`
   * **Nano `D11`** $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `SDA`
   * **Nano `D10`** $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `CS`
