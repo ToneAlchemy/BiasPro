@@ -726,3 +726,25 @@ If you are building this on perfboard (instead of using the custom PCB), we stro
 
 ## ⚖️ License
 This project is released under the **MIT License**. See [LICENSE](LICENSE) for details.
+
+## Project Lineage & Acknowledgements
+
+BiasPro is an independent clean-room rewrite of the earlier
+ToneAlchemy BiasMeter project. The BiasPro firmware was re-architected
+and rewritten without intentionally reusing source code from the earlier
+implementations.
+
+The broader project lineage includes:
+
+- **ArduinoBiasMeter** by John Wagner
+- **Dual Channel Arduino Bias Tester beta 14** by Kiel Lydestad
+  (3DBeerGoggles)
+- **ToneAlchemy BiasMeter**, which evolved from those earlier projects
+
+The earlier projects were distributed under CC BY 4.0 and are acknowledged
+here for their historical contribution to the development of the Arduino
+tube-bias-meter concept.
+
+BiasPro source code is independently released under the **MIT License**.
+Third-party libraries and components remain subject to their respective
+licences.
