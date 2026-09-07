@@ -75,8 +75,8 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 ### Immutable Pin Map
 | Function | Arduino Nano Pin |
 | :--- | :--- |
-| **TFT SCLK** | D13 |
-| **TFT MOSI** | D11 |
+| **TFT SCLK/SCL** | D13 |
+| **TFT MOSI/SDA** | D11 |
 | **TFT CS** | D10 |
 | **TFT DC** | D9 |
 | **TFT RST** | D8 |
