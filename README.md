@@ -95,7 +95,7 @@ When sourcing components for BiasPro, you will encounter two primary hardware pa
 | **Driver IC** | **ST7735R** | Usually **ST7735S** |
 | **Onboard 3.3V LDO Regulator** | ✅ Yes (ultra-low-dropout 3.3V regulator) | ⚠️ Often absent (or transistor `Q1`/`J3Y` for backlight only) |
 | **Onboard Logic Level Shifter** | ✅ Yes (active CD74HC4050 buffer IC) | ❌ **Usually none** (verify module; pins typically route straight to ribbon) |
-| **5V Supply Compatibility** | ✅ Yes (accepts 3.3V – 5V on `VCC`) | Module-dependent (accepts 5V when SPI lines are protected) |
+| **5V Supply Compatibility** | ✅ Yes (accepts 3.3V – 5V on `VCC`) | **Module-dependent** — use 5V VCC only where module explicitly permits it |
 | **5V Logic Compatibility** | ✅ Native 5V plug-and-play | ⚠️ **Requires 500Ω to 2kΩ series resistors on SPI/control lines** |
 | **Header Pin Labels** | `LITE, MISO, SCK, MOSI, TFT_CS, CARD_CS, D/C, RESET, VCC, Gnd` | `GND, VCC/VDD, SCL, SDA, RES/RST, DC, CS, BL/BLK` |
 
@@ -125,7 +125,7 @@ When sourcing components for BiasPro, you will encounter two primary hardware pa
   * **Nano `D9`**  $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `DC`
   * **Nano `D8`**  $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `RES`
 * **Why this is critical:** The series resistors limit current when the Nano's 5V logic drives the 3.3V display interface. The module manufacturer specifies 500Ω–2kΩ series resistance on each Arduino I/O line to reduce electrical stress on the ST7735S input interface and help avoid long-term damage.
-* **Power (`VCC` / `VDD`):** Connect to `5V` (as specified in the factory datasheet when series resistors are fitted) or to a clean, regulated `3.3V` rail.
+* **Power (`VCC` / `VDD`):** Connect to `5V` (only where explicitly permitted by the module datasheet, as with the documented Chinese module when series resistors are fitted) or to a clean, regulated `3.3V` rail.
 * **Backlight (`BL` / `BLK`):** The onboard transistor (`Q1` / `J3Y`) and base resistor (`R3` / `R1`) handle switching. Connect `BL` to the Nano's **`3V3` pin** (the tested, known-good arrangement to safely switch the backlight on), or to an Arduino GPIO pin through a 1kΩ resistor if software dimming is desired.
 
 ---
@@ -160,6 +160,15 @@ To protect against these EMP-like events, this firmware completely bypasses the 
 * **How it works:** If the I2C bus freezes due to interference, the system detects the hang within 25 milliseconds, automatically resets the I2C hardware pins, and immediately resumes reading the Bias probes without ever rebooting the Arduino or losing your place on the screen.
 
 * **Why no Hardware Watchdog Timer (WDT)?** Older versions of this project used the hardware WDT. However, a severe silicon bug in common LGT8F328P Arduino Nano clones caused the WDT to trigger infinite boot-loop crashes during UI updates. The software-level `Wire` timeout is infinitely more reliable, handles EMI elegantly, and completely avoids these bootloader bugs.
+
+#### Hardware I²C Pull-Up Reinforcement (EMI Hardening)
+In addition to the software timeout recovery, the physical BiasPro hardware reinforces the ADS1115 I²C bus with auxiliary pull-up resistors:
+* **`SDA` $\rightarrow$ 4.7kΩ $\rightarrow$ `VDD`**
+* **`SCL` $\rightarrow$ 4.7kΩ $\rightarrow$ `VDD`**
+
+These $4.7\text{ k}\Omega$ metal-film resistors were added during live amplifier testing to strengthen the I²C bus against EMI-induced corruption and bus lockups in electrically aggressive valve-amplifier environments. By lowering the bus impedance and sharpening the $SDA$/$SCL$ rising edges, the bus becomes significantly more immune to capacitively coupled noise from high-voltage plate leads and transformer fields.
+
+Many common ADS1115 breakout modules already include $10\text{ k}\Omega$ onboard pull-up resistors. Adding external $4.7\text{ k}\Omega$ resistors places them in parallel, resulting in an effective bus pull-up impedance of approximately $\approx 3.2\text{ k}\Omega$ (drawing only $\approx 1.56\text{ mA}$ sink current at 5V, comfortably within the $3\text{ mA}$ I²C standard limit). These hardware pull-ups work synergistically with the firmware’s `Wire.setWireTimeout` mechanism to deliver rock-solid stability.
 
 ---
 

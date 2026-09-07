@@ -11,6 +11,9 @@ CORE ELECTRONICS
 [ ] 1x Adafruit ADS1115 16-Bit ADC
     - Link: https://amzn.to/46h8RpA
 
+[ ] 2x 4.7kΩ (4,700 Ohm), 1% tolerance, 1/4W Metal Film Resistors (Recommended)
+    - Purpose: ADS1115 SDA/SCL auxiliary I2C pull-ups for hardware EMI hardening in valve amp environments (see README.md)
+
 [ ] 2x Tube Depot Bias Scout Probes (or equivalent custom-built probes)
     - Link: https://www.tubedepot.com/products/tubedepot-bias-scout-kit
     - Link Build manual: https://s3.amazonaws.com/tubedepot-com-production/spree/attached_files/td_bias_scout_assy_manual_v3.2.pdf?1477059879
