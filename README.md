@@ -95,9 +95,9 @@ When sourcing components for BiasPro, you will encounter two primary hardware pa
 | **Driver IC** | **ST7735R** | Usually **ST7735S** |
 | **Onboard 3.3V LDO Regulator** | ✅ Yes (ultra-low-dropout 3.3V regulator) | ⚠️ Often absent (or transistor `Q1`/`J3Y` for backlight only) |
 | **Onboard Logic Level Shifter** | ✅ Yes (active CD74HC4050 buffer IC) | ❌ **Usually none** (verify module; pins typically route straight to ribbon) |
-| **5V Supply Compatibility** | ✅ Yes (accepts 3.3V – 5V on `VIN`) | Module-dependent (accepts 5V when SPI lines are protected) |
+| **5V Supply Compatibility** | ✅ Yes (accepts 3.3V – 5V on `VCC`) | Module-dependent (accepts 5V when SPI lines are protected) |
 | **5V Logic Compatibility** | ✅ Native 5V plug-and-play | ⚠️ **Requires 500Ω to 2kΩ series resistors on SPI/control lines** |
-| **Typical Header Labels** | `VIN, GND, CLK, MOSI, CS, D/C, RESET, LITE` | `GND, VCC/VDD, SCL, SDA, RES/RST, DC, CS, BL/BLK` |
+| **Header Pin Labels** | `LITE, MISO, SCK, MOSI, TFT_CS, CARD_CS, D/C, RESET, VCC, Gnd` | `GND, VCC/VDD, SCL, SDA, RES/RST, DC, CS, BL/BLK` |
 
 > [!NOTE]
 > **Important Distinction on Adafruit PID 358 vs. PID 618:**  
@@ -105,8 +105,15 @@ When sourcing components for BiasPro, you will encounter two primary hardware pa
 > In contrast, **Adafruit PID 618 is the raw, unmounted 1.8" TFT panel only** (flexible ribbon cable, no PCB). PID 618 is strictly 3.3V-only and requires external regulation and level shifting when paired with a 5V Arduino Nano.
 
 #### 1. Official Adafruit Breakout (PID 358)
-* **Power:** Supply `VIN` with **5V** or **3.3V** (the onboard regulator provides clean 3.3V to the display glass).
-* **Signals:** Wire all 5 SPI lines (`D13, D11, D10, D9, D8`) directly to the Arduino Nano with **no resistors required**. The onboard CD74HC4050 buffer automatically shifts 5V logic down to 3.3V safely.
+* **Power:** Connect **`VCC`** to Arduino Nano **`5V`** (or **`3.3V`**; the onboard regulator safely handles 3.3V–5V input as marked on the PCB silkscreen) and **`Gnd`** to Arduino **`GND`**.
+* **Signals:** Wire the 5 display SPI lines directly to the Arduino Nano with **no external resistors required** (the onboard CD74HC4050 buffer automatically shifts 5V logic down to 3.3V safely):
+  * **Nano `D13`** $\rightarrow$ Adafruit **`SCK`**
+  * **Nano `D11`** $\rightarrow$ Adafruit **`MOSI`**
+  * **Nano `D10`** $\rightarrow$ Adafruit **`TFT_CS`**
+  * **Nano `D9`**  $\rightarrow$ Adafruit **`D/C`**
+  * **Nano `D8`**  $\rightarrow$ Adafruit **`RESET`**
+* **Backlight:** Connect **`LITE`** to **`3V3`** or **`5V`** (or to an Arduino PWM pin if software brightness control is desired; the board notes *Backlite: PWM OK*).
+* **Unused Pins:** **`CARD_CS`** and **`MISO`** belong to the onboard microSD card socket and remain unconnected in BiasPro.
 * **Firmware Support:** BiasPro’s firmware uses `tft.initR(INITR_18BLACKTAB)` via the `Adafruit_ST7735` library, which natively targets the ST7735R controller on PID 358.
 
 #### 2. Generic / Chinese Clone Modules (ST7735S)
