@@ -19,8 +19,9 @@ CORE ELECTRONICS
 DISPLAY & INTERFACE
 =========================================================================
 
-[ ] 1x Adafruit ST7735 1.8" 128x160 Color TFT Display
-    - Link: https://amzn.to/48sSZ4B
+[ ] 1x 1.8" 128x160 Color TFT Display (Adafruit ST7735 or compatible generic ST7735S module)
+    - Link Adafruit: https://amzn.to/48sSZ4B
+    - Note: If using generic Chinese clone modules (e.g. ST7735S / NOMEN_TEC), 5x 1kΩ–1.5kΩ resistors are required in series on the data lines (see README.md).
 
 [ ] 3x Tactile Push Buttons (Normally Open, Panel Mount)
     - Link: https://amzn.to/3VZbeqO

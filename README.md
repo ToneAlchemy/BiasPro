@@ -68,7 +68,7 @@ Tube amplifiers store lethal voltages in their filter capacitors even after bein
 ## ⚙️ Hardware Specifications
 
 * **MCU:** Arduino Nano / ATmega328P
-* **Display:** ST7735 1.8" TFT SPI
+* **Display:** 1.8" 128×160 ST7735/ST7735S SPI TFT (Adafruit or compatible generic clone; see [Display Hardware Differences](#%EF%B8%8F-display-hardware-differences-official-adafruit-vs-generic-clone-st7735) below)
 * **ADC:** ADS1115 (16-bit) at I2C address `0x48`
 * **Inputs:** Three tactile switches (Left, Right, Center)
 
@@ -109,9 +109,9 @@ When sourcing components for BiasPro, you will encounter two primary variants of
   * **Nano `D10`** $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `CS`
   * **Nano `D9`**  $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `DC`
   * **Nano `D8`**  $\rightarrow$ **[1kΩ – 1.5kΩ Resistor]** $\rightarrow$ Display `RES`
-* **Why this is critical:** The series resistors limit current into the ST7735S internal ESD clamping diodes to safe microamp levels ($\approx 1.4\text{ mA}$), preventing excessive silicon heating, display bleaching, contrast fading, or premature burnout.
+* **Why this is critical:** The series resistors limit current when the Nano's 5V logic drives the 3.3V display interface. The module manufacturer specifies 500Ω–2kΩ series resistance on each Arduino I/O line to reduce electrical stress on the ST7735S input interface and help avoid long-term damage.
 * **Power (`VCC` / `VDD`):** Connect to `5V` (as specified in the factory datasheet when series resistors are fitted) or to a clean, regulated `3.3V` rail.
-* **Backlight (`BL` / `BLK`):** The onboard transistor (`Q1` / `J3Y`) and base resistor (`R3` / `R1`) handle switching. Connect `BL` to `3V3` (or `5V`) for constant illumination, or to an Arduino GPIO pin through a 1kΩ resistor if software dimming is desired.
+* **Backlight (`BL` / `BLK`):** The onboard transistor (`Q1` / `J3Y`) and base resistor (`R3` / `R1`) handle switching. Connect `BL` to the Nano's **`3V3` pin** (the tested, known-good arrangement to safely switch the backlight on), or to an Arduino GPIO pin through a 1kΩ resistor if software dimming is desired.
 
 ---
 
