@@ -94,9 +94,9 @@ When sourcing components for BiasPro, you will encounter two primary hardware pa
 | :--- | :--- | :--- |
 | **Driver IC** | **ST7735R** | Usually **ST7735S** |
 | **Onboard 3.3V LDO Regulator** | ✅ Yes (ultra-low-dropout 3.3V regulator) | ⚠️ Often absent (or transistor `Q1`/`J3Y` for backlight only) |
-| **Onboard Logic Level Shifter** | ✅ Yes (active CD74HC4050 buffer IC) | ❌ **None** (header pins route straight to display glass ribbon) |
-| **5V Supply Compatibility** | ✅ Yes (accepts 3.3V – 5V on `VIN`) | Module-dependent (accepts 5V when data lines are protected) |
-| **5V Logic Compatibility** | ✅ Native 5V plug-and-play | ⚠️ **Requires 500Ω to 2kΩ series resistors on all data lines** |
+| **Onboard Logic Level Shifter** | ✅ Yes (active CD74HC4050 buffer IC) | ❌ **Usually none** (verify module; pins typically route straight to ribbon) |
+| **5V Supply Compatibility** | ✅ Yes (accepts 3.3V – 5V on `VIN`) | Module-dependent (accepts 5V when SPI lines are protected) |
+| **5V Logic Compatibility** | ✅ Native 5V plug-and-play | ⚠️ **Requires 500Ω to 2kΩ series resistors on SPI/control lines** |
 | **Typical Header Labels** | `VIN, GND, CLK, MOSI, CS, D/C, RESET, LITE` | `GND, VCC/VDD, SCL, SDA, RES/RST, DC, CS, BL/BLK` |
 
 > [!NOTE]
